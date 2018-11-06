@@ -68,7 +68,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .passwordEncoder(passwordEncoder());
     }
 
-    private UrlBasedCorsConfigurationSource getUrlBasedCorsConfigurationSource() {
+    @Bean
+    public UrlBasedCorsConfigurationSource getUrlBasedCorsConfigurationSource() {
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
