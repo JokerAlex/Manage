@@ -32,11 +32,11 @@ public class Swagger2Config {
     }
 
     private ApiInfo apiInfo() {
-        Contact contact = new Contact("alex", "https://github.com/JokerAlex", "alex.zhao1023@gmail.com");
+        Contact contact = new Contact("alex", "https://github.com/JokerAlex/Manage", "alex.zhao1023@gmail.com");
         return new ApiInfoBuilder()
                 .title("DZHY-库房管理在线api文档")
                 .description("Swagger2 构建在线api文档")
-                .termsOfServiceUrl("https://github.com/JokerAlex/info")
+                .termsOfServiceUrl("https://github.com/JokerAlex/Manage")
                 .contact(contact)
                 .version("1.0")
                 .build();
