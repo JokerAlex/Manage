@@ -71,7 +71,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         user.setUserInfoName(userInfo.getUserInfoName());
         user.setUserInfoPass(passwordEncoder.encode(userInfo.getUserInfoPass()));
         user.setUserInfoTrueName(userInfo.getUserInfoTrueName());
-        user.setUserInfoRoles(userInfo.getUserInfoRoles());
+        user.setUserInfoRoles(userInfo.getUserInfoRoles().toUpperCase());
         try {
             userInfoRepository.save(user);
             log.info("[addUserInfo] user = {}", user.toString());
@@ -164,6 +164,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         } else {
             userInfoPage = userInfoRepository.findAllByUserInfoTrueNameContaining(userTrueName, pageable);
         }
+        userInfoPage.forEach(userInfo -> userInfo.setUserInfoPass(null));
         return ResponseDTO.isSuccess(userInfoPage);
     }
 }
