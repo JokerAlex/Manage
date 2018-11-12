@@ -53,9 +53,8 @@ public class ProductController {
     }
 
     @ApiOperation(value = "删除产品", notes = "删除产品，单个删除，批量删除")
-    @ApiImplicitParam(name = "productIds", value = "要删除的产品ID集合", required = true, dataTypeClass = List.class)
     @DeleteMapping()
-    public ResponseDTO deleteProductBatch(@RequestBody List<Integer> productIds) {
+    public ResponseDTO deleteProductBatch(@RequestParam("productIds[]") List<Integer> productIds) {
         return iProductService.deleteProductBatch(productIds);
     }
 

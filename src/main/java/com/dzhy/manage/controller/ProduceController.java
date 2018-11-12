@@ -105,9 +105,8 @@ public class ProduceController {
     }
 
     @ApiOperation(value = "删除", notes = "单个删除、批量删除")
-    @ApiImplicitParam(name = "produceIds", value = "要删除的生产进度的 ID 集合", required = true, dataTypeClass = List.class)
     @DeleteMapping()
-    public ResponseDTO deleteProduceBatch(@RequestBody List<Integer> produceIds) {
+    public ResponseDTO deleteProduceBatch(@RequestParam("produceIds[]") List<Integer> produceIds) {
         return iProduceService.deleteProduceBatch(produceIds);
     }
 
