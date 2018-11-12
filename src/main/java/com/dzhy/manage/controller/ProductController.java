@@ -4,9 +4,13 @@ import com.dzhy.manage.dto.ResponseDTO;
 import com.dzhy.manage.entity.Product;
 import com.dzhy.manage.service.ProductService;
 import io.swagger.annotations.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -28,6 +32,7 @@ public class ProductController {
 
     @ApiOperation(value = "检查产品名称", notes = "添加新的产品前检查产品名称是否在数据库中已有记录")
     @ApiImplicitParam(name = "productName", value = "产品名称", required = true, dataTypeClass = String.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @GetMapping("/check")
     public ResponseDTO checkProductName(@RequestParam(value = "productName") String productName) {
         return iProductService.checkProductName(productName);
@@ -35,24 +40,37 @@ public class ProductController {
 
     @ApiOperation(value = "添加产品", notes = "添加新的产品")
     @ApiImplicitParam(name = "product", value = "产品实体类", required = true, dataTypeClass = Product.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @PostMapping()
     public ResponseDTO addProduct(@RequestBody Product product) {
         return iProductService.addProduct(product);
     }
 
     @ApiOperation(value = "添加产品", notes = "通过 Excel 文件导入，添加新的产品")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @PostMapping(value = "/import", headers = "content-type=multipart/form-data")
     public ResponseDTO importProduct(@ApiParam(value = "文件", required = true) MultipartFile multipartFile) throws Exception {
         return iProductService.importProduct(multipartFile);
     }
 
     @ApiOperation(value = "更新产品", notes = "更新产品信息")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @PutMapping()
     public ResponseDTO updateProduct(@RequestBody Product product) {
         return iProductService.updateProduct(product);
     }
 
+    @ApiOperation(value = "上传图片", notes = "产品图片上传")
+    @ApiImplicitParam(name = "productId", value = "产品ID", required = true, dataTypeClass = Integer.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
+    @PostMapping(value = "/picture", headers = "content-type=multipart/form-data")
+    public ResponseDTO uploadPictures(@RequestParam(value = "productId") Integer productId, HttpServletRequest request) throws Exception {
+        List<MultipartFile> multipartFiles = ((MultipartHttpServletRequest)request).getFiles("multipartFile");
+        return iProductService.uploadPictures(productId, multipartFiles);
+    }
+
     @ApiOperation(value = "删除产品", notes = "删除产品，单个删除，批量删除")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @DeleteMapping()
     public ResponseDTO deleteProductBatch(@RequestParam("productIds[]") List<Integer> productIds) {
         return iProductService.deleteProductBatch(productIds);
@@ -60,6 +78,7 @@ public class ProductController {
 
     @ApiOperation(value = "获取所有产品", notes = "获取所有产品, 添加新的生产进度使用该接口")
     @ApiImplicitParam(name = "productName", value = "产品名称，模糊查询使用", dataTypeClass = String.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @GetMapping("/list")
     public ResponseDTO listAllProduct(@RequestParam(value = "productName") String productName) {
         return iProductService.listAllProduct(productName);

@@ -7,6 +7,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class UserInfoController {
 
     @ApiOperation(value = "检查用户名", notes = "检查用户名是否可用")
     @ApiImplicitParam(name = "username", value = "用户名", required = true, dataTypeClass =String.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR', 'UESER')")
     @GetMapping("/check")
     public ResponseDTO checkUsername(@RequestParam(value = "username") String username) {
         return iUserInfoService.checkUsername(username);
@@ -37,6 +39,7 @@ public class UserInfoController {
 
     @ApiOperation(value = "添加", notes = "添加新用户")
     @ApiImplicitParam(name = "userInfo", value = "用户实体类", required = true, dataTypeClass = UserInfo.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PostMapping()
     public ResponseDTO addUserInfo(@RequestBody UserInfo userInfo) {
         return iUserInfoService.addUserInfo(userInfo);
@@ -44,6 +47,7 @@ public class UserInfoController {
 
     @ApiOperation(value = "更新", notes = "更新用户用户信息")
     @ApiImplicitParam(name = "userInfo", value = "用户实体类", required = true, dataTypeClass = UserInfo.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR', 'UESER')")
     @PutMapping()
     public ResponseDTO updateUserInfo(@RequestBody UserInfo userInfo) {
         return iUserInfoService.updateUserInfo(userInfo);
@@ -54,6 +58,7 @@ public class UserInfoController {
             @ApiImplicitParam(name = "oldPass", value = "原密码", required = true, dataTypeClass = String.class),
             @ApiImplicitParam(name = "newPass", value = "新密码", required = true, dataTypeClass = String.class)
     })
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR', 'UESER')")
     @PutMapping("/pass")
     public ResponseDTO changePassword(@RequestParam(value = "oldPass") String oldPass,
                                       @RequestParam(value = "newPass") String newPass) {
@@ -63,6 +68,7 @@ public class UserInfoController {
 
     @ApiOperation(value = "删除", notes = "删除用户")
     @ApiImplicitParam(name = "userIds", value = "要删除的用户ID集合", required = true, dataTypeClass = List.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @DeleteMapping()
     public ResponseDTO deleteUserInfo(@RequestBody List<Integer> userIds) {
         return iUserInfoService.deleteUserInfo(userIds);
@@ -74,6 +80,7 @@ public class UserInfoController {
             @ApiImplicitParam(name = "pageSize", value = "页面大小", required = true, dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "userTrueName", value = "用户真实名称，模糊查询使用", dataTypeClass = String.class)
     })
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @GetMapping()
     public ResponseDTO listUserInfo(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
                                     @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize,

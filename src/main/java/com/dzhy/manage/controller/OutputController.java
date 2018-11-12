@@ -13,6 +13,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +42,7 @@ public class OutputController {
 
     @ApiOperation(value = "错误修正", notes = "错误修正，修正后数据库里的值改变为输入值")
     @ApiImplicitParam(name = "output", value = "产值实体类", required = true, dataTypeClass = Output.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @PutMapping()
     public ResponseDTO changeOutput(@RequestBody Output output) {
         return iOutputService.changeOutput(output);
@@ -54,6 +56,7 @@ public class OutputController {
             @ApiImplicitParam(name = "month", value = "月", required = true, dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "productName", value = "产品名称，模糊查询使用", dataTypeClass = String.class)
     })
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR', 'USER')")
     @GetMapping()
     public ResponseDTO listOutput(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
                                   @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize,
@@ -68,6 +71,7 @@ public class OutputController {
             @ApiImplicitParam(name = "year", value = "年", required = true, dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "month", value = "月", required = true, dataTypeClass = Integer.class)
     })
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR', 'USER')")
     @GetMapping("/export")
     public void exportExcel(@RequestParam(value = "year") Integer year,
                             @RequestParam(value = "month") Integer month,
