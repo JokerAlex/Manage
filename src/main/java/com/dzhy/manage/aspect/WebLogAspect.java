@@ -38,7 +38,10 @@ public class WebLogAspect {
         log.info("URL : {}", request.getRequestURL().toString());
         log.info("HTTP_METHOD : {}",  request.getMethod());
         log.info("Last-Skip-IP : {}", request.getHeader("X-Real-IP"));
-        log.info("Remote-IP : {}", request.getHeader("X-Forwarded-For").split(",")[0]);
+        String ips = request.getHeader("X-Forwarded-For");
+        if (ips != null) {
+            log.info("Remote-IP : {}", ips.split(",")[0]);
+        }
         log.info("CLASS_METHOD : {}", joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName());
         log.info("ARGS : {}", Arrays.toString(joinPoint.getArgs()));
         startTime.set(System.currentTimeMillis());
