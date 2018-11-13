@@ -64,8 +64,8 @@ public class ProductController {
     @ApiImplicitParam(name = "productId", value = "产品ID", required = true, dataTypeClass = Integer.class)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @PostMapping(value = "/picture", headers = "content-type=multipart/form-data")
-    public ResponseDTO uploadPictures(@RequestParam(value = "productId") Integer productId, HttpServletRequest request) throws Exception {
-        List<MultipartFile> multipartFiles = ((MultipartHttpServletRequest)request).getFiles("multipartFile");
+    public ResponseDTO uploadPictures(@RequestParam(value = "productId") Integer productId,
+                                      @RequestParam(value = "multipartFiles[]") List<MultipartFile> multipartFiles) throws Exception {
         return iProductService.uploadPictures(productId, multipartFiles);
     }
 
