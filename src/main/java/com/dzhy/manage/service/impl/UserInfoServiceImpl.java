@@ -1,5 +1,6 @@
 package com.dzhy.manage.service.impl;
 
+import com.dzhy.manage.constants.Constants;
 import com.dzhy.manage.dto.ResponseDTO;
 import com.dzhy.manage.entity.UserInfo;
 import com.dzhy.manage.enums.ResultEnum;
@@ -84,18 +85,20 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     @Transactional(rollbackFor = GeneralException.class)
-    public ResponseDTO updateUserInfo(UserInfo userInfo) throws ParameterException, GeneralException {
+    public ResponseDTO updateUserInfo(UserInfo userInfo, int who) throws ParameterException, GeneralException {
         if (userInfo == null || userInfo.getUserInfoId() == null) {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
         }
         UserInfo userSource = userInfoRepository.findByUserInfoId(userInfo.getUserInfoId());
         if (userSource == null) {
-            return ResponseDTO.isError(ResultEnum.NOT_FOUND.getCode() + "-ID:" + userInfo.getUserInfoId());
+            return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + userInfo.getUserInfoId());
         }
         UserInfo user = new UserInfo();
+        if (Constants.ADMIN_UPDATE_USER_INFO == who) {
+            user.setUserInfoRoles(userInfo.getUserInfoRoles());
+            user.setUserInfoIsLocked(userInfo.getUserInfoIsLocked());
+        }
         user.setUserInfoTrueName(userInfo.getUserInfoTrueName());
-        user.setUserInfoRoles(userInfo.getUserInfoRoles());
-        user.setUserInfoIsLocked(userInfo.getUserInfoIsLocked());
         UpdateUtils.copyNullProperties(userSource, user);
         try {
             userInfoRepository.save(user);
@@ -108,6 +111,28 @@ public class UserInfoServiceImpl implements UserInfoService {
     }
 
     @Override
+    @Transactional(rollbackFor = GeneralException.class)
+    public ResponseDTO resetPassword(Integer userInfoId, String pass) throws ParameterException, GeneralException {
+        if (userInfoId == null || StringUtils.isBlank(pass)) {
+            throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
+        }
+        UserInfo userInfo = userInfoRepository.findByUserInfoId(userInfoId);
+        if (userInfo == null) {
+            return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage());
+        }
+        userInfo.setUserInfoPass(passwordEncoder.encode(pass));
+        try {
+            userInfoRepository.save(userInfo);
+            log.info("resetPassword success");
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new GeneralException("重置密码失败");
+        }
+        return ResponseDTO.isSuccess();
+    }
+
+    @Override
+    @Transactional(rollbackFor = GeneralException.class)
     public ResponseDTO changePassword(String oldPass, String newPass) throws ParameterException, GeneralException {
         if (StringUtils.isBlank(oldPass) || StringUtils.isBlank(newPass)) {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
@@ -123,7 +148,7 @@ public class UserInfoServiceImpl implements UserInfoService {
             return ResponseDTO.isError("原密码错误");
         }
         if (oldPass.equals(newPass)) {
-            return ResponseDTO.isError("新密码与原密码相同");
+            return ResponseDTO.isError("新密码不能与原密码相同");
         }
         userInfoSource.setUserInfoPass(passwordEncoder.encode(newPass));
         try {

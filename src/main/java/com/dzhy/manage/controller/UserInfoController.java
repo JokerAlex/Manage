@@ -1,5 +1,6 @@
 package com.dzhy.manage.controller;
 
+import com.dzhy.manage.constants.Constants;
 import com.dzhy.manage.entity.UserInfo;
 import com.dzhy.manage.service.UserInfoService;
 import com.dzhy.manage.dto.ResponseDTO;
@@ -45,12 +46,20 @@ public class UserInfoController {
         return iUserInfoService.addUserInfo(userInfo);
     }
 
-    @ApiOperation(value = "更新", notes = "更新用户用户信息")
+    @ApiOperation(value = "管理员更新", notes = "更新用户用户信息")
+    @ApiImplicitParam(name = "userInfo", value = "用户实体类", required = true, dataTypeClass = UserInfo.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    @PutMapping("/admin")
+    public ResponseDTO updateUserInfoAdmin(@RequestBody UserInfo userInfo) {
+        return iUserInfoService.updateUserInfo(userInfo, Constants.ADMIN_UPDATE_USER_INFO);
+    }
+
+    @ApiOperation(value = "其他用户更新", notes = "更新用户用户信息")
     @ApiImplicitParam(name = "userInfo", value = "用户实体类", required = true, dataTypeClass = UserInfo.class)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR', 'UESER')")
-    @PutMapping()
-    public ResponseDTO updateUserInfo(@RequestBody UserInfo userInfo) {
-        return iUserInfoService.updateUserInfo(userInfo);
+    @PutMapping("/other")
+    public ResponseDTO updateUserInfoOther(@RequestBody UserInfo userInfo) {
+        return iUserInfoService.updateUserInfo(userInfo, Constants.OTHER_UPDAT_USER_INFOE);
     }
 
     @ApiOperation(value = "修改密码", notes = "修改密码")
@@ -62,15 +71,25 @@ public class UserInfoController {
     @PutMapping("/pass")
     public ResponseDTO changePassword(@RequestParam(value = "oldPass") String oldPass,
                                       @RequestParam(value = "newPass") String newPass) {
-
         return iUserInfoService.changePassword(oldPass, newPass);
     }
 
+    @ApiOperation(value = "重置密码", notes = "重置密码")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "userInfoId", value = "用户ID", required = true, dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "pass", value = "新密码", required = true, dataTypeClass = String.class)
+    })
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    @PostMapping("/reset")
+    public ResponseDTO resetPassword(@RequestParam(value = "userInfoId") Integer userInfoId,
+                                     @RequestParam(value = "pass") String pass) {
+        return iUserInfoService.resetPassword(userInfoId, pass);
+    }
+
     @ApiOperation(value = "删除", notes = "删除用户")
-    @ApiImplicitParam(name = "userIds", value = "要删除的用户ID集合", required = true, dataTypeClass = List.class)
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     @DeleteMapping()
-    public ResponseDTO deleteUserInfo(@RequestBody List<Integer> userIds) {
+    public ResponseDTO deleteUserInfo(@RequestParam(value = "userIds[]") List<Integer> userIds) {
         return iUserInfoService.deleteUserInfo(userIds);
     }
 

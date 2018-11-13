@@ -76,4 +76,10 @@ public final class Constants {
     public static final String BAOZHUNAG_TOTAL_PRICE = "包装总金额";
 
     public static final String TEDING_TOTAL_PRICE = "特定总金额";
+
+    /**
+     * 更新用户信息
+     */
+    public static final int ADMIN_UPDATE_USER_INFO = 0;
+    public static final int OTHER_UPDAT_USER_INFOE = 1;
 }

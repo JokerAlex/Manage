@@ -20,7 +20,9 @@ public interface UserInfoService {
 
     ResponseDTO addUserInfo(UserInfo userInfo) throws ParameterException, GeneralException;
 
-    ResponseDTO updateUserInfo(UserInfo userInfo) throws ParameterException, GeneralException;
+    ResponseDTO updateUserInfo(UserInfo userInfo, int who) throws ParameterException, GeneralException;
+
+    ResponseDTO resetPassword(Integer userInfoId, String pass) throws ParameterException, GeneralException;
 
     ResponseDTO changePassword(String oldPass, String newPass) throws ParameterException, GeneralException, AccessDeniedException;
 
