@@ -29,7 +29,13 @@ public class Product {
 
     private Float productPrice;
 
+    private String productSize;
+
+    private String productImg;
+
     private String productComment;
+
+    private Integer categoryId;
 
     private Date productCreateTime;
 
