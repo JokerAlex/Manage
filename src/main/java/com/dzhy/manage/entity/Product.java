@@ -1,6 +1,7 @@
 package com.dzhy.manage.entity;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -19,6 +20,7 @@ import java.util.Date;
 @Data
 @DynamicUpdate
 @DynamicInsert
+@Accessors(chain = true)
 public class Product {
 
     @Id

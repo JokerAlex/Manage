@@ -27,6 +27,8 @@ public interface ProductService {
 
     ResponseDTO uploadPictures(Integer productId, List<MultipartFile> multipartFiles) throws ParameterException, GeneralException, IOException;
 
+    ResponseDTO deletePictures(Integer productId, List<String> fileNames) throws ParameterException, GeneralException, IOException;
+
     ResponseDTO deleteProduct(Integer productId) throws ParameterException, GeneralException;
 
     ResponseDTO deleteProductBatch(List<Integer> productIds) throws ParameterException, GeneralException;

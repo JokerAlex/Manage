@@ -69,6 +69,15 @@ public class ProductController {
         return iProductService.uploadPictures(productId, multipartFiles);
     }
 
+    @ApiOperation(value = "删除图片", notes = "删除，单个、批量删除产品图片")
+    @ApiImplicitParam(name = "productId", value = "产品ID", required = true, dataTypeClass = Integer.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
+    @DeleteMapping("/picture")
+    public ResponseDTO delPictures(@RequestParam(value = "productId") Integer productId,
+                                   @RequestParam(value = "fileNames[]") List<String> fileNames) throws IOException {
+        return iProductService.deletePictures(productId, fileNames);
+    }
+
     @ApiOperation(value = "删除产品", notes = "删除产品，单个删除，批量删除")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @DeleteMapping()

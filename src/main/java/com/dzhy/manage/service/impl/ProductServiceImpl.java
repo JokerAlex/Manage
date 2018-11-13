@@ -13,6 +13,7 @@ import com.dzhy.manage.service.ProductService;
 import com.dzhy.manage.util.ExcelUtils;
 import com.dzhy.manage.util.FtpUtil;
 import com.dzhy.manage.util.UpdateUtils;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -52,6 +53,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Value("${manage.ftp.path}")
     private String ftpPath;
+
+    @Value("${manage.fileType}")
+    private String[] fileTypes;
 
     private final ProductRepository productRepository;
     private final OutputRepository outputRepository;
@@ -184,22 +188,70 @@ public class ProductServiceImpl implements ProductService {
         if (productId == null || CollectionUtils.isEmpty(multipartFiles)) {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
         }
-        //TODO 文件格式判断
-        StringBuilder sb = new StringBuilder();
+        Product product = productRepository.findByProductId(productId);
+        if (product == null) {
+            return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage());
+        }
+        List<String> pictureNameList = Lists.newArrayList();
         Map<String, InputStream> map = new LinkedHashMap<>(multipartFiles.size());
+        //图片重命名
         for (MultipartFile multipartFile : multipartFiles) {
             String originalFilename = multipartFile.getOriginalFilename();
             assert originalFilename != null;
-            String fileName = UUID.randomUUID().toString().replace("-", "") + originalFilename.substring(originalFilename.lastIndexOf("."));
+            String fileType = originalFilename.substring(originalFilename.lastIndexOf("."));
+            if (!isValid(fileType, fileTypes)) {
+                return ResponseDTO.isError("图片格式错误");
+            }
+            String fileName = UUID.randomUUID().toString().replace("-", "") + fileType;
             map.put(fileName, multipartFile.getInputStream());
-            sb.append(fileName).append(',');
+            pictureNameList.add(fileName);
         }
         boolean uploadResult = FtpUtil.uploadFile(map, ftpIp, ftpUsername, ftpPass, ftpPath);
         if (uploadResult) {
-            //TODO 链接添加到产品内部 ftpPath + name
+            //产品保存图片信息
+            if (!StringUtils.isBlank(product.getProductImg())) {
+                pictureNameList.addAll(Lists.newArrayList(product.getProductImg().split(",")));
+            }
+            product.setProductImg(StringUtils.join(pictureNameList, ","));
+            try {
+                productRepository.save(product);
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
+            }
             return ResponseDTO.isSuccess();
         }
         return ResponseDTO.isError();
+    }
+
+    @Override
+    @Transactional(rollbackFor = GeneralException.class)
+    public ResponseDTO deletePictures(Integer productId, List<String> fileNames) throws ParameterException, GeneralException, IOException {
+        if (productId == null || CollectionUtils.isEmpty(fileNames)) {
+            throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
+        }
+
+        Product product = productRepository.findByProductId(productId);
+        if (product == null) {
+            return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage());
+        }
+        if (StringUtils.isBlank(product.getProductImg())) {
+            return ResponseDTO.isError("该产品没有图片");
+        }
+        //删除文件
+        boolean delFileResult = FtpUtil.delFile(fileNames, ftpIp, ftpUsername, ftpPass, ftpPath);
+        List<String> pictureList = Lists.newArrayList(product.getProductImg().split(","));
+        boolean delImgStr = pictureList.removeAll(fileNames);
+        log.info("[deletePictures] productId : {}, delFileResult : {}, delImgStr : {}", productId, delFileResult, delImgStr);
+        //产品图片信息更新
+        product.setProductImg(StringUtils.join(pictureList, ","));
+        try {
+            productRepository.save(product);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
+        }
+        return ResponseDTO.isSuccess();
     }
 
     @Override
@@ -230,6 +282,16 @@ public class ProductServiceImpl implements ProductService {
         }
         log.info("[deleteProductBatch] productIds = {}", productIds.toString());
         try {
+            //获取所有图片名称
+            List<Product> productList = productRepository.findByProductIdIn(productIds);
+            List<String> pictures = Lists.newArrayList();
+            for (Product product : productList) {
+                if (!StringUtils.isBlank(product.getProductImg())) {
+                    pictures.addAll(Lists.newArrayList(product.getProductImg().split(",")));
+                }
+            }
+            boolean delFileResult = FtpUtil.delFile(pictures, ftpIp, ftpUsername, ftpPass, ftpPath);
+            log.info("[deleteProductBatch] delFileResult : {}, pictures : {}", delFileResult, pictures.toString());
             productRepository.deleteAllByProductIdIn(productIds);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -275,5 +337,17 @@ public class ProductServiceImpl implements ProductService {
             return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + " ID:" + productId);
         }
         return ResponseDTO.isSuccess(product);
+    }
+
+    private boolean isValid(String fileType, String[] allowTypes) {
+        if (StringUtils.isBlank(fileType)) {
+            return false;
+        }
+        for (String type : allowTypes) {
+            if (type.equals(fileType)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
