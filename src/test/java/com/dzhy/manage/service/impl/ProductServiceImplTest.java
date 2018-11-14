@@ -77,7 +77,7 @@ public class ProductServiceImplTest {
 
     @Test
     public void listProduct() {
-        ResponseDTO r = productService.listProduct(1,5, null);
+        ResponseDTO r = productService.listProduct(1,5, null, null);
         System.out.println(r.toString());
         Assert.assertEquals(0, r.getStatus());
     }

@@ -97,13 +97,15 @@ public class ProductController {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "pageNum", value = "页码", required = true, dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "pageSize", value = "页面大小", required = true, dataTypeClass = Integer.class),
-            @ApiImplicitParam(name = "productName", value = "产品名称，模糊查询使用", dataTypeClass = String.class)
+            @ApiImplicitParam(name = "productName", value = "产品名称，模糊查询使用", dataTypeClass = String.class),
+            @ApiImplicitParam(name = "categoryId", value = "产品类别，模糊查询使用", dataTypeClass = Integer.class)
     })
     @GetMapping()
     public ResponseDTO listProduct(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
                                    @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize,
-                                   @RequestParam(value = "productName")String productName) {
-        return iProductService.listProduct(pageNum, pageSize, productName);
+                                   @RequestParam(value = "productName") String productName,
+                                   @RequestParam(value = "categoryId") Integer categoryId) {
+        return iProductService.listProduct(pageNum, pageSize, productName, categoryId);
     }
 
     @ApiOperation(value = "获取产品详情", notes = "获取产品详情")

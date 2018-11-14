@@ -23,10 +23,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -302,28 +307,18 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ResponseDTO listAllProduct(String productName) {
-        List<Product> products;
-        if (StringUtils.isBlank(productName)) {
-            products = productRepository.findAll();
-        } else {
-            Sort sort = new Sort(Sort.Direction.ASC, "productName");
-            products = productRepository.findAllByProductNameContaining(productName, sort);
-        }
+        Sort sort = new Sort(Sort.Direction.ASC, "productName");
+        List<Product> products = productRepository.findAll(MySpec.method(productName, null), sort);
         return ResponseDTO.isSuccess(products);
     }
 
     @Override
-    public ResponseDTO listProduct(Integer pageNum, Integer pageSize, String productName) throws ParameterException {
+    public ResponseDTO listProduct(Integer pageNum, Integer pageSize, String productName, Integer categoryId) throws ParameterException {
         if (pageNum == null || pageSize == null) {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
         }
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.Direction.ASC, "productName");
-        Page<Product> productPage;
-        if (StringUtils.isBlank(productName)) {
-            productPage = productRepository.findAll(pageable);
-        } else {
-            productPage = productRepository.findAllByProductNameContaining(productName, pageable);
-        }
+        Page<Product> productPage = productRepository.findAll(MySpec.method(productName, categoryId), pageable);
         return ResponseDTO.isSuccess(productPage);
     }
 
@@ -349,5 +344,27 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return false;
+    }
+
+    private static class MySpec {
+        /**
+         * 动态查询语句
+         * @param productName
+         * @param categoryId
+         * @return
+         */
+        static Specification<Product> method(String productName, Integer categoryId) {
+            return (Specification<Product>) (root, criteriaQuery, criteriaBuilder) -> {
+                List<Predicate> predicateList = new ArrayList<>();
+                if (!StringUtils.isBlank(productName)) {
+                    predicateList.add(criteriaBuilder.like(root.get("productName"), '%' + productName + '%'));
+                } else if (categoryId != null) {
+                    predicateList.add((criteriaBuilder.equal(root.get("categoryId"), categoryId)));
+                }
+                log.info("productName : {}, categoryId : {}", productName, categoryId);
+                Predicate[] predicates = new Predicate[predicateList.size()];
+                return criteriaBuilder.and(predicateList.toArray(predicates));
+            };
+        }
     }
 }

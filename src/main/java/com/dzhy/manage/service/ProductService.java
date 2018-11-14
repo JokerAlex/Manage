@@ -35,7 +35,7 @@ public interface ProductService {
 
     ResponseDTO listAllProduct(String productName)throws ParameterException;
 
-    ResponseDTO listProduct(Integer pageNum, Integer pageSize, String productName) throws ParameterException;
+    ResponseDTO listProduct(Integer pageNum, Integer pageSize, String productName, Integer categoryId) throws ParameterException;
 
     ResponseDTO getDetails(Integer productId) throws ParameterException, GeneralException;
 }
