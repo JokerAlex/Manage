@@ -100,7 +100,15 @@ public class ProduceController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @PutMapping()
     public ResponseDTO updateProduce(@RequestBody Produce produce) {
-        return iProduceService.updateProduce(produce);
+        return iProduceService.updateProduce(produce, Constants.NOT_OUTPUT);
+    }
+
+    @ApiOperation(value = "出货", notes = "北京和北京特定出货")
+    @ApiImplicitParam(name = "produce", value = "生产进度实体类", required = true, dataTypeClass = Produce.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
+    @PutMapping("/output")
+    public ResponseDTO isOutput(@RequestBody Produce produce) {
+        return iProduceService.updateProduce(produce, Constants.IS_OUTPUT);
     }
 
     @ApiOperation(value = "错误修正", notes = "错误修正，修正后数据库里的值改变为输入值")

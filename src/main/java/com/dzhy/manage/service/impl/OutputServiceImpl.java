@@ -96,6 +96,10 @@ public class OutputServiceImpl implements OutputService {
                 return ResponseDTO.isError();
             }
             update.setOutputTedingTotalPrice(update.getOutputTeding() * product.getProductPrice());
+        } else if (output.getOutputBeijing() != null) {
+            update.setOutputBeijing(output.getOutputBeijing());
+        } else if (output.getOutputBeijingteding() != null) {
+            update.setOutputBeijingteding(output.getOutputBeijingteding());
         }
         UpdateUtils.copyNullProperties(outputSource, update);
         try {
@@ -126,6 +130,8 @@ public class OutputServiceImpl implements OutputService {
                         .setOutputBaozhuangTotalPrice(x.getOutputBaozhuangTotalPrice() + y.getOutputBaozhuangTotalPrice())
                         .setOutputTeding(x.getOutputTeding() + y.getOutputTeding())
                         .setOutputTedingTotalPrice(x.getOutputTedingTotalPrice() + y.getOutputTedingTotalPrice())
+                        .setOutputBeijing(x.getOutputBeijing() + y.getOutputBeijing())
+                        .setOutputBeijingteding(x.getOutputBeijingteding() + y.getOutputBeijingteding())
                 )
                 .orElse(new Output());
         sum.setOutputProductName("合计");
@@ -139,15 +145,17 @@ public class OutputServiceImpl implements OutputService {
                             String.valueOf(output.getOutputBaozhuang()),
                             String.valueOf(output.getOutputTeding()),
                             String.valueOf(output.getOutputBaozhuangTotalPrice()),
-                            String.valueOf(output.getOutputTedingTotalPrice())
+                            String.valueOf(output.getOutputTedingTotalPrice()),
+                            String.valueOf(output.getOutputBeijing()),
+                            String.valueOf(output.getOutputBeijingteding())
                     );
                     return row;
                 })
                 .collect(Collectors.toList());
         String title = year + "-" + month + "\t" + Constants.OUTPUT_TITLE;
         List<String> headers = Arrays.asList(Constants.PRODUCT_NAME, Constants.XIA_DAN, Constants.MU_GONG,
-                Constants.YOU_FANG, Constants.BAO_ZHUANG, Constants.TE_DING,
-                Constants.BAOZHUNAG_TOTAL_PRICE, Constants.TEDING_TOTAL_PRICE);
+                Constants.YOU_FANG, Constants.BAO_ZHUANG, Constants.TE_DING, Constants.BAOZHUNAG_TOTAL_PRICE,
+                Constants.TEDING_TOTAL_PRICE, Constants.BEI_JING, Constants.BEI_JING_TE_DING);
         try {
             ExcelUtils.exportData(title, headers, list, outputStream);
         } catch (Exception e) {

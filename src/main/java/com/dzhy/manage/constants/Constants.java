@@ -69,6 +69,11 @@ public final class Constants {
 
     public static final String DENG_COMMENT = "等备注";
 
+    public static final int IS_OUTPUT = 1;
+
+    public static final int NOT_OUTPUT = 0;
+
+
     /**
      * 产值表列名
      */

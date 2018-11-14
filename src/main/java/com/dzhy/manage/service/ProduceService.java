@@ -26,7 +26,7 @@ public interface ProduceService {
 
     ResponseDTO exportExcel(Integer year, Integer month, Integer day, OutputStream outputStream) throws ParameterException, GeneralException;
 
-    ResponseDTO updateProduce(Produce produce) throws ParameterException, GeneralException;
+    ResponseDTO updateProduce(Produce produce, int flag) throws ParameterException, GeneralException;
 
     ResponseDTO changeProduce(Produce produce) throws ParameterException, GeneralException;
 

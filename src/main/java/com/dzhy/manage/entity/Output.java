@@ -49,6 +49,10 @@ public class Output {
 
     private Float outputTedingTotalPrice;
 
+    private Integer outputBeijing;
+
+    private Integer outputBeijingteding;
+
     private Date outputCreateTime;
 
     private Date outputUpdateTime;

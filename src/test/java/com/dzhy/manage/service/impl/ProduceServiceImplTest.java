@@ -1,5 +1,6 @@
 package com.dzhy.manage.service.impl;
 
+import com.dzhy.manage.constants.Constants;
 import com.dzhy.manage.dto.ResponseDTO;
 import com.dzhy.manage.entity.Produce;
 import org.junit.Test;
@@ -68,7 +69,7 @@ public class ProduceServiceImplTest {
 
         produce.setProduceDeng(10);
         produce.setProduceDengComment("deng + 10");
-        ResponseDTO r = produceService.updateProduce(produce);
+        ResponseDTO r = produceService.updateProduce(produce, Constants.NOT_OUTPUT);
         System.out.println(r.toString());
     }
 
