@@ -5,7 +5,6 @@ import com.dzhy.manage.entity.Category;
 import com.dzhy.manage.service.CategoryService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,15 +61,8 @@ public class CategoryController {
     }
 
     @ApiOperation(value = "列表", notes = "获取类别列表")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "pageNum", value = "页码", required = true, dataTypeClass = Integer.class),
-            @ApiImplicitParam(name = "pageSize", value = "页面大小", required = true, dataTypeClass = Integer.class),
-            @ApiImplicitParam(name = "categoryName", value = "类别名称，模糊查询使用", dataTypeClass = String.class)
-    })
     @GetMapping()
-    public ResponseDTO listCategory(@RequestParam(value = "pageNum") Integer pageNum,
-                                    @RequestParam(value = "pageSize")Integer pageSize,
-                                    @RequestParam(value = "categoryName")String categoryName) {
-        return iCategoryService.listCategory(pageNum, pageSize, categoryName);
+    public ResponseDTO listCategory() {
+        return iCategoryService.listCategory();
     }
 }

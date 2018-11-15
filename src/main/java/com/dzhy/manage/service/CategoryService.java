@@ -23,5 +23,5 @@ public interface CategoryService {
 
     ResponseDTO deleteCategoryBatch(List<Integer> categoryIds) throws ParameterException, GeneralException;
 
-    ResponseDTO listCategory(Integer pageNum, Integer pageSize, String categoryName) throws ParameterException;
+    ResponseDTO listCategory();
 }

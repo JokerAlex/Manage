@@ -11,10 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,17 +105,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public ResponseDTO listCategory(Integer pageNum, Integer pageSize, String categoryName) throws ParameterException {
-        if (pageNum == null || pageSize == null) {
-            throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
-        }
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.Direction.ASC, "categoryName");
-        Page<Category> categoryPage;
-        if (StringUtils.isBlank(categoryName)) {
-            categoryPage = categoryRepository.findAll(pageable);
-        } else {
-            categoryPage = categoryRepository.findAllByCategoryNameContaining(categoryName, pageable);
-        }
-        return ResponseDTO.isSuccess(categoryPage);
+    public ResponseDTO listCategory() {
+        List<Category> categoryList = categoryRepository.findAll();
+        return ResponseDTO.isSuccess(categoryList);
     }
 }
