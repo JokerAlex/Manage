@@ -9,6 +9,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -53,6 +54,7 @@ public class CategoryController {
         return iCategoryService.updateCategory(category);
     }
 
+    @ApiIgnore
     @ApiOperation(value = "删除类别", notes = "单个/批量删除类别")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
     @DeleteMapping()
