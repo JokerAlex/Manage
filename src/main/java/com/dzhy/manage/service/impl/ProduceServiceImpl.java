@@ -101,6 +101,12 @@ public class ProduceServiceImpl implements ProduceService {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
         }
 
+        LocalDate date = LocalDate.now();
+        if (produceRepository.existsByProduceYearAndProduceMonthAndProduceDay(date.getYear(), date.getMonthValue(), date.getDayOfMonth())) {
+            log.info("请先将今天的数据清空");
+            return ResponseDTO.isError("请先将今天的数据清空");
+        }
+
         String fileName = multipartFile.getOriginalFilename();
         log.info("fileName = {}", fileName);
         //判断文件类型
@@ -110,7 +116,6 @@ public class ProduceServiceImpl implements ProduceService {
             return ResponseDTO.isError(ResultEnum.ILLEGAL_FILE_TYPE.getMessage());
         }
         //excel文件读取，写入数据库
-        LocalDate date = LocalDate.now();
         List<Map<String, String>> readResult = ExcelUtils.readToMapList(multipartFile.getInputStream());
         List<Produce> produceList = readResult.stream()
                 .map(row -> {
