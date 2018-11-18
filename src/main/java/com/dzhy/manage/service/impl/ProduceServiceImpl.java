@@ -641,9 +641,9 @@ public class ProduceServiceImpl implements ProduceService {
         StringBuilder sb = new StringBuilder();
         sb.append(time.format(formatter)).append(newComment);
         if (!StringUtils.isBlank(origin)) {
-            List<String> commentList = Lists.newArrayList(origin.split(","));
+            List<String> commentList = Lists.newArrayList(origin.split("###"));
             commentList.add(sb.toString());
-            return StringUtils.join(commentList, ",");
+            return StringUtils.join(commentList, "###");
         }
         return sb.toString();
     }

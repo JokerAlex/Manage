@@ -55,29 +55,29 @@ expect {
     "yes/no" { send "yes\r";exp_continue }
 }
 
-expect "]#"
+expect -re {[#\$]+}
 
 send "cd ${RemoteDir}\r"
 
-expect "]#"
+expect -re {[#\$]+}
 
 send "./kill.sh\r"
 
-expect "]#"
+expect -re {[#\$]+}
 
 send "ls\r"
 
 ###############start################
 
-expect "]#"
+expect -re {[#\$]+}
 
 send "mv ${RemoteDirTemp}/${FileName} ${RemoteDir}\r"
 
-expect "]#"
+expect -re {[#\$]+}
 
 send "cd ${RemoteDir}\r"
 
-expect "]#"
+expect -re {[#\$]+}
 
 send "./start.sh\r"
 
@@ -86,7 +86,7 @@ expect "*Started *Application in * seconds (JVM running for *)"
 #  发送Ctrl-C
 send "\003"
 
-expect "]#"
+expect -re {[#\$]+}
 
 send "logout\r"
 
