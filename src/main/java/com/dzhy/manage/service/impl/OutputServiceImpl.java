@@ -121,20 +121,8 @@ public class OutputServiceImpl implements OutputService {
         if (CollectionUtils.isEmpty(outputList)) {
             return ResponseDTO.isError("选定的月份没有数据");
         }
-        Output sum = outputList.stream()
-                .reduce((x, y) -> new Output()
-                        .setOutputXiadan(x.getOutputXiadan() + y.getOutputXiadan())
-                        .setOutputMugong(x.getOutputMugong() + y.getOutputMugong())
-                        .setOutputYoufang(x.getOutputYoufang() + y.getOutputYoufang())
-                        .setOutputBaozhuang(x.getOutputBaozhuang() + y.getOutputBaozhuang())
-                        .setOutputBaozhuangTotalPrice(x.getOutputBaozhuangTotalPrice() + y.getOutputBaozhuangTotalPrice())
-                        .setOutputTeding(x.getOutputTeding() + y.getOutputTeding())
-                        .setOutputTedingTotalPrice(x.getOutputTedingTotalPrice() + y.getOutputTedingTotalPrice())
-                        .setOutputBeijing(x.getOutputBeijing() + y.getOutputBeijing())
-                        .setOutputBeijingteding(x.getOutputBeijingteding() + y.getOutputBeijingteding())
-                )
-                .orElse(new Output());
-        sum.setOutputProductName("合计");
+        Output total = getTotal(outputList);
+        outputList.add(total);
         List<List<String>> list = outputList.stream()
                 .map(output -> {
                     List<String> row = Arrays.asList(
@@ -163,5 +151,41 @@ public class OutputServiceImpl implements OutputService {
             throw new GeneralException(ResultEnum.EXPORT_ERROR.getMessage());
         }
         return ResponseDTO.isSuccess();
+    }
+
+    @Override
+    public ResponseDTO getOutputTotal(Integer year, Integer month) {
+        if (year == null || month == null) {
+            throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
+        }
+        List<Output> outputList = outputRepository.findAllByOutputYearAndAndOutputMonth(year, month);
+        Output total = getTotal(outputList);
+        return ResponseDTO.isSuccess(total);
+    }
+
+    private Output getTotal(List<Output> outputList) {
+        return outputList.stream()
+                .reduce((x, y) -> new Output()
+                        .setOutputXiadan(x.getOutputXiadan() + y.getOutputXiadan())
+                        .setOutputMugong(x.getOutputMugong() + y.getOutputMugong())
+                        .setOutputYoufang(x.getOutputYoufang() + y.getOutputYoufang())
+                        .setOutputBaozhuang(x.getOutputBaozhuang() + y.getOutputBaozhuang())
+                        .setOutputBaozhuangTotalPrice(x.getOutputBaozhuangTotalPrice() + y.getOutputBaozhuangTotalPrice())
+                        .setOutputTeding(x.getOutputTeding() + y.getOutputTeding())
+                        .setOutputTedingTotalPrice(x.getOutputTedingTotalPrice() + y.getOutputTedingTotalPrice())
+                        .setOutputBeijing(x.getOutputBeijing() + y.getOutputBeijing())
+                        .setOutputBeijingteding(x.getOutputBeijingteding() + y.getOutputBeijingteding())
+                )
+                .orElse(new Output()
+                        .setOutputXiadan(0)
+                        .setOutputMugong(0)
+                        .setOutputYoufang(0)
+                        .setOutputBaozhuang(0)
+                        .setOutputBaozhuangTotalPrice(0.0F)
+                        .setOutputTeding(0)
+                        .setOutputTedingTotalPrice(0.0F)
+                        .setOutputBeijing(0)
+                        .setOutputBeijingteding(0))
+                .setOutputProductName("合计");
     }
 }

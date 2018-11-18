@@ -92,6 +92,18 @@ public class OutputController {
         iOutputService.exportExcel(year, month, response.getOutputStream());
     }
 
+    @ApiOperation(value = "合计", notes = "计算各列合计")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "year", value = "年", required = true, dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "month", value = "月", required = true, dataTypeClass = Integer.class)
+    })
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR', 'USER')")
+    @GetMapping("/total")
+    public ResponseDTO getTotal(@RequestParam(value = "year") Integer year,
+                                @RequestParam(value = "month") Integer month) {
+        return iOutputService.getOutputTotal(year, month);
+    }
+
     static String getEncoderFileName(HttpServletRequest request, String fileName) {
         String encoderFileName;
         try {

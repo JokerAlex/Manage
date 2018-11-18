@@ -190,6 +190,19 @@ public class ProduceServiceImpl implements ProduceService {
                     p.setProduceDay(date.getDayOfMonth());
                     p.setProduceCreateTime(null);
                     p.setProduceUpdateTime(null);
+                    //每月1号的数据不导入备注信息
+                    if (date.getDayOfMonth() == 1) {
+                        p.setProduceXiadanComment(null);
+                        p.setProduceMugongComment(null);
+                        p.setProduceYoufangComment(null);
+                        p.setProduceBaozhuangComment(null);
+                        p.setProduceTedingComment(null);
+                        p.setProduceBeijingComment(null);
+                        p.setProduceBeijingtedingComment(null);
+                        p.setProduceBendihetongComment(null);
+                        p.setProduceWaidihetongComment(null);
+                        p.setProduceDengComment(null);
+                    }
                     return p;
                 })
                 .collect(Collectors.toList());
@@ -212,33 +225,8 @@ public class ProduceServiceImpl implements ProduceService {
             return ResponseDTO.isError("选定的日期没有数据");
         }
         //计算属性值合计
-        Produce sum = produceList.stream()
-                .reduce((x, y) ->
-                        new Produce()
-                                .setProduceXiadan(x.getProduceXiadan() + y.getProduceXiadan())
-                                .setProduceMugong(x.getProduceMugong() + y.getProduceMugong())
-                                .setProduceYoufang(x.getProduceYoufang() + y.getProduceYoufang())
-                                .setProduceBaozhuang(x.getProduceBaozhuang() + y.getProduceBaozhuang())
-                                .setProduceTeding(x.getProduceTeding() + y.getProduceTeding())
-                                .setProduceBeijing(x.getProduceBeijing() + y.getProduceBeijing())
-                                .setProduceBeijingteding(x.getProduceBeijingteding() + y.getProduceBeijingteding())
-                                .setProduceBendihetong(x.getProduceBendihetong() + y.getProduceBendihetong())
-                                .setProduceWaidihetong(x.getProduceWaidihetong() + y.getProduceWaidihetong())
-                                .setProduceDeng(x.getProduceDeng() + y.getProduceDeng())
-                )
-                .orElse(new Produce());
-        sum.setProduceProductName("合计")
-                .setProduceXiadanComment("")
-                .setProduceMugongComment("")
-                .setProduceYoufangComment("")
-                .setProduceBaozhuangComment("")
-                .setProduceTedingComment("")
-                .setProduceBeijingComment("")
-                .setProduceBeijingtedingComment("")
-                .setProduceBendihetongComment("")
-                .setProduceWaidihetongComment("")
-                .setProduceDengComment("");
-        produceList.add(sum);
+        Produce total = getTotal(produceList);
+        produceList.add(total);
         List<List<String>> list = produceList.stream()
                 .map(produce -> {
                     List<String> row = Lists.newArrayList(
@@ -421,12 +409,12 @@ public class ProduceServiceImpl implements ProduceService {
                 outputSource.setOutputTedingTotalPrice(outputSource.getOutputTeding() * product.getProductPrice());
             } else {
                 //出货->进度：北京特定减少。产值：北京特定增加
-               if (produce.getProduceBeijingteding() > produceSource.getProduceBeijingteding()) {
-                   return ResponseDTO.isError("北京特定库存不足");
-               } else {
-                   update.setProduceBeijingteding(produceSource.getProduceBeijingteding() - produce.getProduceBeijingteding());
-                   outputSource.setOutputBeijingteding(outputSource.getOutputBeijingteding() + produce.getProduceBeijingteding());
-               }
+                if (produce.getProduceBeijingteding() > produceSource.getProduceBeijingteding()) {
+                    return ResponseDTO.isError("北京特定库存不足");
+                } else {
+                    update.setProduceBeijingteding(produceSource.getProduceBeijingteding() - produce.getProduceBeijingteding());
+                    outputSource.setOutputBeijingteding(outputSource.getOutputBeijingteding() + produce.getProduceBeijingteding());
+                }
             }
             update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), produce.getProduceBeijingtedingComment()));
 
@@ -596,6 +584,11 @@ public class ProduceServiceImpl implements ProduceService {
         if (year == null || month == null || day == null) {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
         }
+        LocalDate now = LocalDate.now();
+        LocalDate temp = LocalDate.of(year, month, day);
+        if (temp.isBefore(now)) {
+            return ResponseDTO.isError("不能删除过去日期的数据");
+        }
         try {
             produceRepository.deleteAllByProduceYearAndAndProduceMonthAndProduceDay(year, month, day);
         } catch (Exception e) {
@@ -630,6 +623,46 @@ public class ProduceServiceImpl implements ProduceService {
             return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produceId);
         }
         return ResponseDTO.isSuccess(produce);
+    }
+
+    @Override
+    public ResponseDTO getProduceTotal(Integer year, Integer month, Integer day) {
+        if (year == null || month == null || day == null) {
+            throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
+        }
+        List<Produce> produceList = produceRepository.findAllByProduceYearAndProduceMonthAndProduceDay(year, month, day);
+        Produce total = getTotal(produceList);
+        return ResponseDTO.isSuccess(total);
+    }
+
+    private Produce getTotal(List<Produce> produceList) {
+        //计算属性值合计
+        return produceList.stream()
+                .reduce((x, y) ->
+                        new Produce()
+                                .setProduceXiadan(x.getProduceXiadan() + y.getProduceXiadan())
+                                .setProduceMugong(x.getProduceMugong() + y.getProduceMugong())
+                                .setProduceYoufang(x.getProduceYoufang() + y.getProduceYoufang())
+                                .setProduceBaozhuang(x.getProduceBaozhuang() + y.getProduceBaozhuang())
+                                .setProduceTeding(x.getProduceTeding() + y.getProduceTeding())
+                                .setProduceBeijing(x.getProduceBeijing() + y.getProduceBeijing())
+                                .setProduceBeijingteding(x.getProduceBeijingteding() + y.getProduceBeijingteding())
+                                .setProduceBendihetong(x.getProduceBendihetong() + y.getProduceBendihetong())
+                                .setProduceWaidihetong(x.getProduceWaidihetong() + y.getProduceWaidihetong())
+                                .setProduceDeng(x.getProduceDeng() + y.getProduceDeng())
+                )
+                .orElse(new Produce()
+                        .setProduceXiadan(0)
+                        .setProduceMugong(0)
+                        .setProduceYoufang(0)
+                        .setProduceBaozhuang(0)
+                        .setProduceTeding(0)
+                        .setProduceBeijing(0)
+                        .setProduceBeijingteding(0)
+                        .setProduceBendihetong(0)
+                        .setProduceWaidihetong(0)
+                        .setProduceDeng(0))
+                .setProduceProductName("合计");
     }
 
     private String commentAppend(String origin, String newComment) {

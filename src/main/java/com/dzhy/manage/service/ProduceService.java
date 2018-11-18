@@ -37,4 +37,6 @@ public interface ProduceService {
     ResponseDTO listProduce(Integer pageNum, Integer pageSize, Integer year, Integer month, Integer day, String productName) throws ParameterException;
 
     ResponseDTO getDetails(Integer produceId) throws ParameterException;
+
+    ResponseDTO getProduceTotal(Integer year, Integer month, Integer day) throws ParameterException;
 }

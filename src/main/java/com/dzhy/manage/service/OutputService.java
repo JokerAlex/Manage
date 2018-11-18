@@ -20,4 +20,6 @@ public interface OutputService {
     ResponseDTO changeOutput(Output output) throws ParameterException, GeneralException;
 
     ResponseDTO exportExcel(Integer year, Integer month, OutputStream outputStream) throws ParameterException, GeneralException;
+
+    ResponseDTO getOutputTotal(Integer year, Integer month) throws ParameterException;
 }

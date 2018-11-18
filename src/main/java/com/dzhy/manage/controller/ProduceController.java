@@ -166,4 +166,18 @@ public class ProduceController {
     public ResponseDTO getDetails(@PathVariable("produceId") Integer produceId) {
         return iProduceService.getDetails(produceId);
     }
+
+    @ApiOperation(value = "合计", notes = "计算各列合计")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "year", value = "年", required = true, dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "month", value = "月", required = true, dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "day", value = "日", required = true, dataTypeClass = Integer.class)
+    })
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR', 'USER')")
+    @GetMapping("/total")
+    public ResponseDTO getTotal(@RequestParam(value = "year") Integer year,
+                                @RequestParam(value = "month") Integer month,
+                                @RequestParam(value = "day") Integer day) {
+        return iProduceService.getProduceTotal(year, month, day);
+    }
 }
