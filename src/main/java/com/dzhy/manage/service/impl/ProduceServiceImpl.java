@@ -306,6 +306,9 @@ public class ProduceServiceImpl implements ProduceService {
         //判断更新是否可行，正值为生产进度，负值为退单
         if (produce.getProduceXiadan() != null) {
             //下单增加
+            if (produce.getProduceXiadan() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            }
             if (produce.getProduceXiadan() + produceSource.getProduceXiadan() < 0) {
                 return ResponseDTO.isError("更新后，下单值为负数");
             }
@@ -314,7 +317,9 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceMugong() != null) {
             //进度：木工增加，下单减少
             //产值：下单增加
-            if (produce.getProduceMugong() > produceSource.getProduceXiadan()) {
+            if (produce.getProduceMugong() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            } else if (produce.getProduceMugong() > produceSource.getProduceXiadan()) {
                 return ResponseDTO.isError("下单库存不足");
             } else if (produce.getProduceMugong() + produceSource.getProduceMugong() < 0) {
                 return ResponseDTO.isError("退单超过木工库存");
@@ -326,7 +331,9 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceYoufang() != null) {
             //进度：油房增加，木工减少
             //产值：木工增加
-            if (produce.getProduceYoufang() > produceSource.getProduceMugong()) {
+            if (produce.getProduceYoufang() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            } else if (produce.getProduceYoufang() > produceSource.getProduceMugong()) {
                 return ResponseDTO.isError("木工库存不足");
             } else if (produce.getProduceYoufang() + produceSource.getProduceYoufang() < 0) {
                 return ResponseDTO.isError("退单超过油房库存");
@@ -338,7 +345,9 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceBaozhuang() != null) {
             //进度：包装增加，油房减少
             //产值：油房增加
-            if (produce.getProduceBaozhuang() > produceSource.getProduceYoufang()) {
+            if (produce.getProduceBaozhuang() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            } else if (produce.getProduceBaozhuang() > produceSource.getProduceYoufang()) {
                 return ResponseDTO.isError("油房库存不足");
             } else if (produce.getProduceBaozhuang() + produceSource.getProduceBaozhuang() < 0) {
                 return ResponseDTO.isError("退单量超过包装库存");
@@ -350,7 +359,9 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceTeding() != null) {
             //进度：特定增加，油房减少
             //产值：油房增加
-            if (produce.getProduceTeding() > produceSource.getProduceYoufang()) {
+            if (produce.getProduceTeding() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            } else if (produce.getProduceTeding() > produceSource.getProduceYoufang()) {
                 return ResponseDTO.isError("油房库存不足");
             } else if (produce.getProduceTeding() + produceSource.getProduceTeding() < 0) {
                 return ResponseDTO.isError("退单量超过特定库存");
@@ -362,6 +373,10 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceBeijing() != null) {
             //进度：北京增加，包装减少
             //产值：包装增加
+            if (produce.getProduceBeijing() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            }
+
             // flag 判断更新是否为北京出货
             if (flag == Constants.NOT_OUTPUT) {
                 if (produce.getProduceBeijing() > produceSource.getProduceBaozhuang()) {
@@ -391,6 +406,9 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceBeijingteding() != null) {
             //进度：北京特定增加，特定减少
             //产值：特定增加
+            if (produce.getProduceBeijingteding() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            }
             //判断是否为北京特定出货
             if (flag == Constants.NOT_OUTPUT) {
                 if (produce.getProduceBeijingteding() > produceSource.getProduceTeding()) {
@@ -421,7 +439,9 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceBendihetong() != null) {
             //进度：本地合同自己增加，减少
             //产值：没有变化
-            if (produce.getProduceBendihetong() + produceSource.getProduceBendihetong() < 0) {
+            if (produce.getProduceBendihetong() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            } else if (produce.getProduceBendihetong() + produceSource.getProduceBendihetong() < 0) {
                 return ResponseDTO.isError("退单量超过已有本地合同量");
             }
             update.setProduceBendihetong(produce.getProduceBendihetong() + produceSource.getProduceBendihetong());
@@ -429,7 +449,9 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceWaidihetong() != null) {
             //进度：外地合同自己增加，减少
             //产值：没有变化
-            if (produce.getProduceWaidihetong() + produceSource.getProduceWaidihetong() < 0) {
+            if (produce.getProduceWaidihetong() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            } else if (produce.getProduceWaidihetong() + produceSource.getProduceWaidihetong() < 0) {
                 return ResponseDTO.isError("退单量超过已有外地合同量");
             }
             update.setProduceWaidihetong(produce.getProduceWaidihetong() + produceSource.getProduceWaidihetong());
@@ -437,7 +459,9 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceDeng() != null) {
             //进度：等待增加，减少
             //产值：没有变化
-            if (produce.getProduceDeng() + produceSource.getProduceDeng() < 0) {
+            if (produce.getProduceDeng() == 0) {
+                return ResponseDTO.isError("更新值不能为 0 ");
+            } else if (produce.getProduceDeng() + produceSource.getProduceDeng() < 0) {
                 return ResponseDTO.isError("退单量超过已有等待量");
             }
             update.setProduceDeng(produce.getProduceDeng() + produceSource.getProduceDeng());
