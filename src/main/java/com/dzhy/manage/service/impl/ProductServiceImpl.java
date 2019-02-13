@@ -28,10 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -214,10 +211,13 @@ public class ProductServiceImpl implements ProductService {
         boolean uploadResult = FtpUtil.uploadFile(map, ftpIp, ftpUsername, ftpPass, ftpPath);
         if (uploadResult) {
             //产品保存图片信息
-            if (!StringUtils.isBlank(product.getProductImg())) {
-                pictureNameList.addAll(Lists.newArrayList(product.getProductImg().split(",")));
+            log.info("productImg : {}", product.getProductImg());
+            StringBuilder sb = new StringBuilder();
+            if (StringUtils.isNotBlank(product.getProductImg())) {
+                sb.append(product.getProductImg()).append(",");
             }
-            product.setProductImg(StringUtils.join(pictureNameList, ","));
+            sb.append(StringUtils.join(pictureNameList, ","));
+            product.setProductImg(sb.toString());
             try {
                 productRepository.save(product);
             } catch (Exception e) {

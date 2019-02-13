@@ -3,13 +3,12 @@ package com.dzhy.manage.controller;
 import com.dzhy.manage.dto.ResponseDTO;
 import com.dzhy.manage.entity.Product;
 import com.dzhy.manage.service.ProductService;
+import com.google.common.collect.Lists;
 import io.swagger.annotations.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
 
@@ -63,10 +62,19 @@ public class ProductController {
     @ApiOperation(value = "上传图片", notes = "产品图片上传")
     @ApiImplicitParam(name = "productId", value = "产品ID", required = true, dataTypeClass = Integer.class)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
-    @PostMapping(value = "/picture", headers = "content-type=multipart/form-data")
+    @PostMapping(value = "/pictures", headers = "content-type=multipart/form-data")
     public ResponseDTO uploadPictures(@RequestParam(value = "productId") Integer productId,
                                       @RequestParam(value = "multipartFiles[]") List<MultipartFile> multipartFiles) throws Exception {
         return iProductService.uploadPictures(productId, multipartFiles);
+    }
+
+    @ApiOperation(value = "上传图片-单张", notes = "产品图片上传")
+    @ApiImplicitParam(name = "productId", value = "产品ID", required = true, dataTypeClass = Integer.class)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'OPERATOR')")
+    @PostMapping(value = "/picture", headers = "content-type=multipart/form-data")
+    public ResponseDTO uploadPicture(@RequestParam(value = "productId") Integer productId,
+                                      @RequestParam(value = "multipartFile") MultipartFile multipartFile) throws Exception {
+        return uploadPictures(productId, Lists.newArrayList(multipartFile));
     }
 
     @ApiOperation(value = "删除图片", notes = "删除，单个、批量删除产品图片")
