@@ -113,6 +113,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         "/configuration/ui",
                         "/configuration/security").permitAll()
                 // swagger end
+                //druid
+                .antMatchers("/druid/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
