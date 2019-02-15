@@ -313,7 +313,7 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("更新后，下单值为负数");
             }
             update.setProduceXiadan(produce.getProduceXiadan() + produceSource.getProduceXiadan());
-            update.setProduceXiadanComment(commentAppend(produceSource.getProduceXiadanComment(), produce.getProduceXiadanComment()));
+            update.setProduceXiadanComment(commentAppend(produceSource.getProduceXiadanComment(), "", produce.getProduceXiadan(), produce.getProduceXiadanComment()));
         } else if (produce.getProduceMugong() != null) {
             //进度：木工增加，下单减少
             //产值：下单增加
@@ -325,7 +325,7 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("退单超过木工库存");
             }
             update.setProduceMugong(produce.getProduceMugong() + produceSource.getProduceMugong());
-            update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), produce.getProduceMugongComment()));
+            update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), "", produce.getProduceMugong(), produce.getProduceMugongComment()));
             produceSource.setProduceXiadan(produceSource.getProduceXiadan() - produce.getProduceMugong());
             outputSource.setOutputXiadan(outputSource.getOutputXiadan() + produce.getProduceMugong());
         } else if (produce.getProduceYoufang() != null) {
@@ -339,7 +339,7 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("退单超过油房库存");
             }
             update.setProduceYoufang(produce.getProduceYoufang() + produceSource.getProduceYoufang());
-            update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), produce.getProduceYoufangComment()));
+            update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), "", produce.getProduceYoufang(), produce.getProduceYoufangComment()));
             produceSource.setProduceMugong(produceSource.getProduceMugong() - produce.getProduceYoufang());
             outputSource.setOutputMugong(outputSource.getOutputMugong() + produce.getProduceYoufang());
         } else if (produce.getProduceBaozhuang() != null) {
@@ -353,7 +353,7 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("退单量超过包装库存");
             }
             update.setProduceBaozhuang(produce.getProduceBaozhuang() + produceSource.getProduceBaozhuang());
-            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), produce.getProduceBaozhuangComment()));
+            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "", produce.getProduceBaozhuang(), produce.getProduceBaozhuangComment()));
             produceSource.setProduceYoufang(produceSource.getProduceYoufang() - produce.getProduceBaozhuang());
             outputSource.setOutputYoufang(outputSource.getOutputYoufang() + produce.getProduceBaozhuang());
         } else if (produce.getProduceTeding() != null) {
@@ -367,7 +367,7 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("退单量超过特定库存");
             }
             update.setProduceTeding(produce.getProduceTeding() + produceSource.getProduceTeding());
-            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), produce.getProduceTedingComment()));
+            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "", produce.getProduceTeding(), produce.getProduceTedingComment()));
             produceSource.setProduceYoufang(produceSource.getProduceYoufang() - produce.getProduceTeding());
             outputSource.setOutputYoufang(outputSource.getOutputYoufang() + produce.getProduceTeding());
         } else if (produce.getProduceBeijing() != null) {
@@ -401,7 +401,7 @@ public class ProduceServiceImpl implements ProduceService {
                 update.setProduceBeijing(produceSource.getProduceBeijing() - produce.getProduceBeijing());
                 outputSource.setOutputBeijing(outputSource.getOutputBeijing() + produce.getProduceBeijing());
             }
-            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), produce.getProduceBeijingComment()));
+            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "", produceSource.getProduceBeijing(), produce.getProduceBeijingComment()));
 
         } else if (produce.getProduceBeijingteding() != null) {
             //进度：北京特定增加，特定减少
@@ -434,7 +434,7 @@ public class ProduceServiceImpl implements ProduceService {
                     outputSource.setOutputBeijingteding(outputSource.getOutputBeijingteding() + produce.getProduceBeijingteding());
                 }
             }
-            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), produce.getProduceBeijingtedingComment()));
+            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "", produceSource.getProduceBeijingteding(), produce.getProduceBeijingtedingComment()));
 
         } else if (produce.getProduceBendihetong() != null) {
             //进度：本地合同自己增加，减少
@@ -445,7 +445,7 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("退单量超过已有本地合同量");
             }
             update.setProduceBendihetong(produce.getProduceBendihetong() + produceSource.getProduceBendihetong());
-            update.setProduceBendihetongComment(commentAppend(produceSource.getProduceBendihetongComment(), produce.getProduceBendihetongComment()));
+            update.setProduceBendihetongComment(commentAppend(produceSource.getProduceBendihetongComment(), "", produce.getProduceBendihetong(), produce.getProduceBendihetongComment()));
         } else if (produce.getProduceWaidihetong() != null) {
             //进度：外地合同自己增加，减少
             //产值：没有变化
@@ -455,7 +455,7 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("退单量超过已有外地合同量");
             }
             update.setProduceWaidihetong(produce.getProduceWaidihetong() + produceSource.getProduceWaidihetong());
-            update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), produce.getProduceWaidihetongComment()));
+            update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), "", produce.getProduceWaidihetong(), produce.getProduceWaidihetongComment()));
         } else if (produce.getProduceDeng() != null) {
             //进度：等待增加，减少
             //产值：没有变化
@@ -465,7 +465,7 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("退单量超过已有等待量");
             }
             update.setProduceDeng(produce.getProduceDeng() + produceSource.getProduceDeng());
-            update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), produce.getProduceDengComment()));
+            update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "", produce.getProduceDeng(), produce.getProduceDengComment()));
         }
         //更新到数据库
         try {
@@ -501,70 +501,70 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("下单值不能为负数");
             }
             update.setProduceXiadan(produce.getProduceXiadan());
-            update.setProduceXiadanComment(commentAppend(produceSource.getProduceXiadanComment(), produce.getProduceXiadanComment()));
+            update.setProduceXiadanComment(commentAppend(produceSource.getProduceXiadanComment(), "修改为", produce.getProduceXiadan(), produce.getProduceXiadanComment()));
         } else if (produce.getProduceMugong() != null) {
             //修正木工
             if (produce.getProduceMugong() < 0) {
                 return ResponseDTO.isError("木工值不能为负数");
             }
             update.setProduceMugong(produce.getProduceMugong());
-            update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), produce.getProduceMugongComment()));
+            update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), "修改为", produce.getProduceMugong(), produce.getProduceMugongComment()));
         } else if (produce.getProduceYoufang() != null) {
             //修正油房
             if (produce.getProduceYoufang() < 0) {
                 return ResponseDTO.isError("油房值不能为负数");
             }
             update.setProduceYoufang(produce.getProduceYoufang());
-            update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), produce.getProduceYoufangComment()));
+            update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), "修改为", produce.getProduceYoufang(), produce.getProduceYoufangComment()));
         } else if (produce.getProduceBaozhuang() != null) {
             //修正包装
             if (produce.getProduceBaozhuang() < 0) {
                 return ResponseDTO.isError("包装值不能为负数");
             }
             update.setProduceBaozhuang(produce.getProduceBaozhuang());
-            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), produce.getProduceBaozhuangComment()));
+            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "修改为", produce.getProduceBaozhuang(), produce.getProduceBaozhuangComment()));
         } else if (produce.getProduceTeding() != null) {
             //修正特定
             if (produce.getProduceTeding() < 0) {
                 return ResponseDTO.isError("特定值不能为负数");
             }
             update.setProduceTeding(produce.getProduceTeding());
-            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), produce.getProduceTedingComment()));
+            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "修改为", produce.getProduceTeding(), produce.getProduceTedingComment()));
         } else if (produce.getProduceBeijing() != null) {
             //修正北京
             if (produce.getProduceBeijing() < 0) {
                 return ResponseDTO.isError("北京值不能为负数");
             }
             update.setProduceBeijing(produce.getProduceBeijing());
-            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), produce.getProduceBeijingComment()));
+            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "修改为", produce.getProduceBeijing(), produce.getProduceBeijingComment()));
         } else if (produce.getProduceBeijingteding() != null) {
             //修正北京特定
             if (produce.getProduceBeijingteding() < 0) {
                 return ResponseDTO.isError("北京特定值不能为负数");
             }
             update.setProduceBeijingteding(produce.getProduceBeijingteding());
-            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), produce.getProduceBeijingtedingComment()));
+            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "修改为", produce.getProduceBeijingteding(), produce.getProduceBeijingtedingComment()));
         } else if (produce.getProduceBendihetong() != null) {
             //修正本地合同
             if (produce.getProduceBendihetong() < 0) {
                 return ResponseDTO.isError("本地合同值不能为负数");
             }
             update.setProduceBendihetong(produce.getProduceBendihetong());
-            update.setProduceBendihetongComment(commentAppend(produceSource.getProduceBendihetongComment(), produce.getProduceBendihetongComment()));
+            update.setProduceBendihetongComment(commentAppend(produceSource.getProduceBendihetongComment(), "修改为", produce.getProduceBendihetong(), produce.getProduceBendihetongComment()));
         } else if (produce.getProduceWaidihetong() != null) {
             //修正外地合同
             if (produce.getProduceWaidihetong() < 0) {
                 return ResponseDTO.isError("外地合同值不能为负数");
             }
             update.setProduceWaidihetong(produce.getProduceWaidihetong());
-            update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), produce.getProduceWaidihetongComment()));
+            update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), "修改为", produce.getProduceWaidihetong(), produce.getProduceWaidihetongComment()));
         } else if (produce.getProduceDeng() != null) {
             //修正等待
             if (produce.getProduceDeng() < 0) {
                 return ResponseDTO.isError("等待值不能为负数");
             }
             update.setProduceDeng(produce.getProduceDeng());
-            update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), produce.getProduceDengComment()));
+            update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "修改为", produce.getProduceDeng(), produce.getProduceDengComment()));
         }
         //更新到数据库
         try {
@@ -689,18 +689,21 @@ public class ProduceServiceImpl implements ProduceService {
                 .setProduceProductName("合计");
     }
 
-    private String commentAppend(String origin, String newComment) {
+    private String commentAppend(String origin, String str, Integer num, String newComment) {
         if (StringUtils.isBlank(newComment)) {
             return origin;
         }
         LocalDateTime time = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         StringBuilder sb = new StringBuilder();
-        sb.append(time.format(formatter)).append(newComment);
-        if (!StringUtils.isBlank(origin)) {
-            List<String> commentList = Lists.newArrayList(origin.split("###"));
-            commentList.add(sb.toString());
-            return StringUtils.join(commentList, "###");
+        sb.append(time.format(formatter))
+                .append("#")
+                .append(str)
+                .append(num)
+                .append(",")
+                .append(newComment);
+        if (StringUtils.isNotBlank(origin)) {
+            return sb.append("###").append(origin).toString();
         }
         return sb.toString();
     }
