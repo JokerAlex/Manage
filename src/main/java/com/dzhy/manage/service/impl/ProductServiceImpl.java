@@ -8,6 +8,7 @@ import com.dzhy.manage.enums.ResultEnum;
 import com.dzhy.manage.exception.GeneralException;
 import com.dzhy.manage.exception.ParameterException;
 import com.dzhy.manage.repository.OutputRepository;
+import com.dzhy.manage.repository.ProduceRepository;
 import com.dzhy.manage.repository.ProductRepository;
 import com.dzhy.manage.service.ProductService;
 import com.dzhy.manage.util.ExcelUtils;
@@ -31,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.criteria.Predicate;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,11 +62,13 @@ public class ProductServiceImpl implements ProductService {
     private String[] fileTypes;
 
     private final ProductRepository productRepository;
+    private final ProduceRepository produceRepository;
     private final OutputRepository outputRepository;
 
     @Autowired
-    public ProductServiceImpl(ProductRepository productRepository, OutputRepository outputRepository) {
+    public ProductServiceImpl(ProductRepository productRepository, ProduceRepository produceRepository, OutputRepository outputRepository) {
         this.productRepository = productRepository;
+        this.produceRepository = produceRepository;
         this.outputRepository = outputRepository;
     }
 
@@ -162,9 +166,11 @@ public class ProductServiceImpl implements ProductService {
         }
         Product update = new Product();
         update.setProductId(product.getProductId());
-        update.setProductName(product.getProductName());
+        //update.setProductName(product.getProductName());
         update.setProductPrice(product.getProductPrice());
         update.setProductComment(product.getProductComment());
+        update.setProductSize(product.getProductSize());
+        update.setCategoryId(product.getCategoryId());
         log.info("[addProduct] product = {}", product.toString());
         Product source = productRepository.findByProductId(product.getProductId());
         UpdateUtils.copyNullProperties(source, update);
@@ -292,8 +298,14 @@ public class ProductServiceImpl implements ProductService {
             //获取所有图片名称
             List<Product> productList = productRepository.findByProductIdIn(productIds);
             List<String> pictures = Lists.newArrayList();
+            LocalDate date = LocalDate.now();
             for (Product product : productList) {
-                if (!StringUtils.isBlank(product.getProductImg())) {
+                if (produceRepository.existsByProduceYearAndProduceMonthAndProduceDayAndProduceProductId(
+                        date.getYear(), date.getMonthValue(), date.getDayOfMonth(), product.getProductId())) {
+                    return ResponseDTO.isError("该产品在进度表中仍有使用记录，不能删除");
+                }
+
+                if (StringUtils.isNotBlank(product.getProductImg())) {
                     pictures.addAll(Lists.newArrayList(product.getProductImg().split(",")));
                 }
             }
