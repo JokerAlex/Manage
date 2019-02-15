@@ -98,6 +98,8 @@ public class ProductServiceImpl implements ProductService {
         insert.setProductName(product.getProductName());
         insert.setProductPrice(product.getProductPrice());
         insert.setProductComment(product.getProductComment());
+        insert.setCategoryId(product.getCategoryId());
+        insert.setProductSize(product.getProductSize());
         try {
             productRepository.save(insert);
         } catch (Exception e) {
@@ -356,9 +358,10 @@ public class ProductServiceImpl implements ProductService {
         static Specification<Product> method(String productName, Integer categoryId) {
             return (Specification<Product>) (root, criteriaQuery, criteriaBuilder) -> {
                 List<Predicate> predicateList = new ArrayList<>();
-                if (!StringUtils.isBlank(productName)) {
+                if (StringUtils.isNotBlank(productName)) {
                     predicateList.add(criteriaBuilder.like(root.get("productName"), '%' + productName + '%'));
-                } else if (categoryId != null) {
+                }
+                if (categoryId != null) {
                     predicateList.add((criteriaBuilder.equal(root.get("categoryId"), categoryId)));
                 }
                 log.info("productName : {}, categoryId : {}", productName, categoryId);
