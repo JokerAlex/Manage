@@ -125,7 +125,7 @@ public class OutputServiceImpl implements OutputService {
         outputList.add(total);
         List<List<String>> list = outputList.stream()
                 .map(output -> {
-                    List<String> row = Arrays.asList(
+                    return Arrays.asList(
                             output.getOutputProductName(),
                             String.valueOf(output.getOutputXiadan()),
                             String.valueOf(output.getOutputMugong()),
@@ -137,7 +137,6 @@ public class OutputServiceImpl implements OutputService {
                             String.valueOf(output.getOutputBeijing()),
                             String.valueOf(output.getOutputBeijingteding())
                     );
-                    return row;
                 })
                 .collect(Collectors.toList());
         String title = year + "-" + month + "\t" + Constants.OUTPUT_TITLE;

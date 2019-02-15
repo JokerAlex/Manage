@@ -32,10 +32,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -114,6 +112,7 @@ public class ProduceServiceImpl implements ProduceService {
         log.info("fileName = {}", fileName);
         //判断文件类型
         //读取文件内容并存储
+        assert fileName != null;
         if (!fileName.substring(fileName.lastIndexOf(ExcelUtils.POINT)).equals(ExcelUtils.EXCEL_2003L)
                 && !fileName.substring(fileName.lastIndexOf(ExcelUtils.POINT)).equals(ExcelUtils.EXCEL_2007U)) {
             return ResponseDTO.isError(ResultEnum.ILLEGAL_FILE_TYPE.getMessage());
@@ -126,7 +125,7 @@ public class ProduceServiceImpl implements ProduceService {
                     if (product == null) {
                         throw new GeneralException(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + row.get(Constants.PRODUCT_NAME));
                     }
-                    Produce insert = new Produce(
+                    return new Produce(
                             date.getYear(),
                             date.getMonthValue(),
                             date.getDayOfMonth(),
@@ -153,7 +152,6 @@ public class ProduceServiceImpl implements ProduceService {
                             Integer.valueOf(row.get(Constants.DENG)),
                             row.get(Constants.DENG_COMMENT)
                     );
-                    return insert;
                 })
                 .collect(Collectors.toList());
         try {
@@ -173,7 +171,6 @@ public class ProduceServiceImpl implements ProduceService {
         }
         LocalDate date = LocalDate.now();
         if (produceRepository.existsByProduceYearAndProduceMonthAndProduceDay(date.getYear(), date.getMonthValue(), date.getDayOfMonth())) {
-            log.info("请先将今天的数据清空");
             return ResponseDTO.isError("请先将今天的数据清空");
         }
         List<Produce> produceList = produceRepository.findAllByProduceYearAndProduceMonthAndProduceDay(year, month, day);
@@ -229,7 +226,7 @@ public class ProduceServiceImpl implements ProduceService {
         produceList.add(total);
         List<List<String>> list = produceList.stream()
                 .map(produce -> {
-                    List<String> row = Lists.newArrayList(
+                    return Lists.newArrayList(
                             produce.getProduceProductName(),
                             String.valueOf(produce.getProduceXiadan()),
                             produce.getProduceXiadanComment(),
@@ -252,7 +249,6 @@ public class ProduceServiceImpl implements ProduceService {
                             String.valueOf(produce.getProduceDeng()),
                             produce.getProduceDengComment()
                     );
-                    return row;
                 })
                 .collect(Collectors.toList());
         List<String> headers = Arrays.asList(Constants.PRODUCT_NAME, Constants.XIA_DAN, Constants.XIA_DAN_COMMENT,
@@ -284,188 +280,41 @@ public class ProduceServiceImpl implements ProduceService {
             return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produce.getProduceId());
         }
         //获取 output source
-        boolean isOutputExist = outputRepository.existsByOutputYearAndOutputMonthAndOutputProductId(date.getYear(),
-                date.getMonthValue(), produceSource.getProduceProductId());
-        if (!isOutputExist) {
-            Output insert = new Output();
-            insert.setOutputYear(date.getYear());
-            insert.setOutputMonth(date.getMonthValue());
-            insert.setOutputProductId(produceSource.getProduceProductId());
-            insert.setOutputProductName(produceSource.getProduceProductName());
-            try {
-                outputRepository.save(insert);
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                throw new GeneralException(ResultEnum.ADD_ERROR.getMessage() + "-产值:" + produceSource.getProduceProductName());
-            }
-        }
-        Output outputSource = outputRepository.findByOutputYearAndOutputMonthAndOutputProductId(date.getYear(),
-                date.getMonthValue(), produceSource.getProduceProductId());
+        Output outputSource = getOutputSource(date.getYear(), date.getMonthValue(),
+                produceSource.getProduceProductId(), produceSource.getProduceProductName());
 
         Produce update = new Produce();
         //判断更新是否可行，正值为生产进度，负值为退单
-        if (produce.getProduceXiadan() != null) {
-            //下单增加
-            if (produce.getProduceXiadan() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            }
-            if (produce.getProduceXiadan() + produceSource.getProduceXiadan() < 0) {
-                return ResponseDTO.isError("更新后，下单值为负数");
-            }
-            update.setProduceXiadan(produce.getProduceXiadan() + produceSource.getProduceXiadan());
-            update.setProduceXiadanComment(commentAppend(produceSource.getProduceXiadanComment(), "", produce.getProduceXiadan(), produce.getProduceXiadanComment()));
-        } else if (produce.getProduceMugong() != null) {
-            //进度：木工增加，下单减少
-            //产值：下单增加
-            if (produce.getProduceMugong() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            } else if (produce.getProduceMugong() > produceSource.getProduceXiadan()) {
-                return ResponseDTO.isError("下单库存不足");
-            } else if (produce.getProduceMugong() + produceSource.getProduceMugong() < 0) {
-                return ResponseDTO.isError("退单超过木工库存");
-            }
-            update.setProduceMugong(produce.getProduceMugong() + produceSource.getProduceMugong());
-            update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), "", produce.getProduceMugong(), produce.getProduceMugongComment()));
-            produceSource.setProduceXiadan(produceSource.getProduceXiadan() - produce.getProduceMugong());
-            outputSource.setOutputXiadan(outputSource.getOutputXiadan() + produce.getProduceMugong());
-        } else if (produce.getProduceYoufang() != null) {
-            //进度：油房增加，木工减少
-            //产值：木工增加
-            if (produce.getProduceYoufang() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            } else if (produce.getProduceYoufang() > produceSource.getProduceMugong()) {
-                return ResponseDTO.isError("木工库存不足");
-            } else if (produce.getProduceYoufang() + produceSource.getProduceYoufang() < 0) {
-                return ResponseDTO.isError("退单超过油房库存");
-            }
-            update.setProduceYoufang(produce.getProduceYoufang() + produceSource.getProduceYoufang());
-            update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), "", produce.getProduceYoufang(), produce.getProduceYoufangComment()));
-            produceSource.setProduceMugong(produceSource.getProduceMugong() - produce.getProduceYoufang());
-            outputSource.setOutputMugong(outputSource.getOutputMugong() + produce.getProduceYoufang());
-        } else if (produce.getProduceBaozhuang() != null) {
-            //进度：包装增加，油房减少
-            //产值：油房增加
-            if (produce.getProduceBaozhuang() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            } else if (produce.getProduceBaozhuang() > produceSource.getProduceYoufang()) {
-                return ResponseDTO.isError("油房库存不足");
-            } else if (produce.getProduceBaozhuang() + produceSource.getProduceBaozhuang() < 0) {
-                return ResponseDTO.isError("退单量超过包装库存");
-            }
-            update.setProduceBaozhuang(produce.getProduceBaozhuang() + produceSource.getProduceBaozhuang());
-            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "", produce.getProduceBaozhuang(), produce.getProduceBaozhuangComment()));
-            produceSource.setProduceYoufang(produceSource.getProduceYoufang() - produce.getProduceBaozhuang());
-            outputSource.setOutputYoufang(outputSource.getOutputYoufang() + produce.getProduceBaozhuang());
-        } else if (produce.getProduceTeding() != null) {
-            //进度：特定增加，油房减少
-            //产值：油房增加
-            if (produce.getProduceTeding() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            } else if (produce.getProduceTeding() > produceSource.getProduceYoufang()) {
-                return ResponseDTO.isError("油房库存不足");
-            } else if (produce.getProduceTeding() + produceSource.getProduceTeding() < 0) {
-                return ResponseDTO.isError("退单量超过特定库存");
-            }
-            update.setProduceTeding(produce.getProduceTeding() + produceSource.getProduceTeding());
-            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "", produce.getProduceTeding(), produce.getProduceTedingComment()));
-            produceSource.setProduceYoufang(produceSource.getProduceYoufang() - produce.getProduceTeding());
-            outputSource.setOutputYoufang(outputSource.getOutputYoufang() + produce.getProduceTeding());
-        } else if (produce.getProduceBeijing() != null) {
-            //进度：北京增加，包装减少
-            //产值：包装增加
-            if (produce.getProduceBeijing() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            }
-
-            // flag 判断更新是否为北京出货
-            if (flag == Constants.NOT_OUTPUT) {
-                if (produce.getProduceBeijing() > produceSource.getProduceBaozhuang()) {
-                    return ResponseDTO.isError("包装库存不足");
-                } else if (produce.getProduceBeijing() + produceSource.getProduceBeijing() < 0) {
-                    return ResponseDTO.isError("退单量超过包装库存");
-                }
-                update.setProduceBeijing(produce.getProduceBeijing() + produceSource.getProduceBeijing());
-                produceSource.setProduceBaozhuang(produceSource.getProduceBaozhuang() - produce.getProduceBeijing());
-                outputSource.setOutputBaozhuang(outputSource.getOutputBaozhuang() + produce.getProduceBeijing());
-
-                Product product = productRepository.findByProductId(produceSource.getProduceProductId());
-                if (product == null) {
-                    return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produceSource.getProduceProductId());
-                }
-                outputSource.setOutputBaozhuangTotalPrice(outputSource.getOutputBaozhuang() * product.getProductPrice());
-            } else {
-                //出货->进度：北京减少。产值：北京增加
-                if (produce.getProduceBeijing() > produceSource.getProduceBeijing()) {
-                    return ResponseDTO.isError("北京库存不足");
-                }
-                update.setProduceBeijing(produceSource.getProduceBeijing() - produce.getProduceBeijing());
-                outputSource.setOutputBeijing(outputSource.getOutputBeijing() + produce.getProduceBeijing());
-            }
-            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "", produceSource.getProduceBeijing(), produce.getProduceBeijingComment()));
-
-        } else if (produce.getProduceBeijingteding() != null) {
-            //进度：北京特定增加，特定减少
-            //产值：特定增加
-            if (produce.getProduceBeijingteding() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            }
-            //判断是否为北京特定出货
-            if (flag == Constants.NOT_OUTPUT) {
-                if (produce.getProduceBeijingteding() > produceSource.getProduceTeding()) {
-                    return ResponseDTO.isError("特定库存不足");
-                } else if (produce.getProduceBeijingteding() + produceSource.getProduceBeijingteding() < 0) {
-                    return ResponseDTO.isError("退单量超过北京特定库存");
-                }
-                update.setProduceBeijingteding(produce.getProduceBeijingteding() + produceSource.getProduceBeijingteding());
-                produceSource.setProduceTeding(produceSource.getProduceTeding() - produce.getProduceBeijingteding());
-                outputSource.setOutputTeding(outputSource.getOutputTeding() + produce.getProduceBeijingteding());
-
-                Product product = productRepository.findByProductId(produceSource.getProduceProductId());
-                if (product == null) {
-                    return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produceSource.getProduceProductId());
-                }
-                outputSource.setOutputTedingTotalPrice(outputSource.getOutputTeding() * product.getProductPrice());
-            } else {
-                //出货->进度：北京特定减少。产值：北京特定增加
-                if (produce.getProduceBeijingteding() > produceSource.getProduceBeijingteding()) {
-                    return ResponseDTO.isError("北京特定库存不足");
-                } else {
-                    update.setProduceBeijingteding(produceSource.getProduceBeijingteding() - produce.getProduceBeijingteding());
-                    outputSource.setOutputBeijingteding(outputSource.getOutputBeijingteding() + produce.getProduceBeijingteding());
-                }
-            }
-            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "", produceSource.getProduceBeijingteding(), produce.getProduceBeijingtedingComment()));
-
-        } else if (produce.getProduceBendihetong() != null) {
-            //进度：本地合同自己增加，减少
-            //产值：没有变化
-            if (produce.getProduceBendihetong() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            } else if (produce.getProduceBendihetong() + produceSource.getProduceBendihetong() < 0) {
-                return ResponseDTO.isError("退单量超过已有本地合同量");
-            }
-            update.setProduceBendihetong(produce.getProduceBendihetong() + produceSource.getProduceBendihetong());
-            update.setProduceBendihetongComment(commentAppend(produceSource.getProduceBendihetongComment(), "", produce.getProduceBendihetong(), produce.getProduceBendihetongComment()));
-        } else if (produce.getProduceWaidihetong() != null) {
-            //进度：外地合同自己增加，减少
-            //产值：没有变化
-            if (produce.getProduceWaidihetong() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            } else if (produce.getProduceWaidihetong() + produceSource.getProduceWaidihetong() < 0) {
-                return ResponseDTO.isError("退单量超过已有外地合同量");
-            }
-            update.setProduceWaidihetong(produce.getProduceWaidihetong() + produceSource.getProduceWaidihetong());
-            update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), "", produce.getProduceWaidihetong(), produce.getProduceWaidihetongComment()));
-        } else if (produce.getProduceDeng() != null) {
-            //进度：等待增加，减少
-            //产值：没有变化
-            if (produce.getProduceDeng() == 0) {
-                return ResponseDTO.isError("更新值不能为 0 ");
-            } else if (produce.getProduceDeng() + produceSource.getProduceDeng() < 0) {
-                return ResponseDTO.isError("退单量超过已有等待量");
-            }
-            update.setProduceDeng(produce.getProduceDeng() + produceSource.getProduceDeng());
-            update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "", produce.getProduceDeng(), produce.getProduceDengComment()));
+        if (produce.getProduceXiadan() != null && !updateXiaDan(produce, produceSource, update).isOk()) {
+            //下单
+            return updateXiaDan(produce, produceSource, update);
+        } else if (produce.getProduceMugong() != null && !updateMuGong(produce, produceSource, update, outputSource).isOk()) {
+            //木工
+            return updateMuGong(produce, produceSource, update, outputSource);
+        } else if (produce.getProduceYoufang() != null && !updateYouFang(produce, produceSource, update, outputSource).isOk()) {
+            //油房
+            return updateYouFang(produce, produceSource, update, outputSource);
+        } else if (produce.getProduceBaozhuang() != null && !updateBaoZhuang(produce, produceSource, update, outputSource).isOk()) {
+            //包装
+            return updateBaoZhuang(produce, produceSource, update, outputSource);
+        } else if (produce.getProduceTeding() != null && !updateTeDing(produce, produceSource, update, outputSource).isOk()) {
+            //特定
+            return updateTeDing(produce, produceSource, update, outputSource);
+        } else if (produce.getProduceBeijing() != null && !updateBeiJing(produce, produceSource, update, outputSource, flag).isOk()) {
+            //北京
+            return updateBeiJing(produce, produceSource, update, outputSource, flag);
+        } else if (produce.getProduceBeijingteding() != null && !updateBeiJingTeDing(produce, produceSource, update, outputSource, flag).isOk()) {
+            //北京特定
+            return updateBeiJingTeDing(produce, produceSource, update, outputSource, flag);
+        } else if (produce.getProduceBendihetong() != null && !updateBenDiHeTong(produce, produceSource, update).isOk()) {
+            //本地合同
+            return updateBenDiHeTong(produce, produceSource, update);
+        } else if (produce.getProduceWaidihetong() != null && !updateWaiDiHeTong(produce, produceSource, update).isOk()) {
+            //外地合同
+            return updateWaiDiHeTong(produce, produceSource, update);
+        } else if (produce.getProduceDeng() != null && !updateDeng(produce, produceSource, update).isOk()) {
+            //等待
+            return updateDeng(produce, produceSource, update);
         }
         //更新到数据库
         try {
@@ -495,76 +344,58 @@ public class ProduceServiceImpl implements ProduceService {
             return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produce.getProduceId());
         }
         Produce update = new Produce();
-        if (produce.getProduceXiadan() != null) {
+        if (produce.getProduceXiadan() != null && produce.getProduceXiadan() >= 0) {
             //修正下单
-            if (produce.getProduceXiadan() < 0) {
-                return ResponseDTO.isError("下单值不能为负数");
-            }
             update.setProduceXiadan(produce.getProduceXiadan());
-            update.setProduceXiadanComment(commentAppend(produceSource.getProduceXiadanComment(), "修改为", produce.getProduceXiadan(), produce.getProduceXiadanComment()));
-        } else if (produce.getProduceMugong() != null) {
+            update.setProduceXiadanComment(commentAppend(produceSource.getProduceXiadanComment(), "修改为",
+                    produce.getProduceXiadan(), produce.getProduceXiadanComment()));
+        } else if (produce.getProduceMugong() != null && produce.getProduceMugong() >= 0) {
             //修正木工
-            if (produce.getProduceMugong() < 0) {
-                return ResponseDTO.isError("木工值不能为负数");
-            }
             update.setProduceMugong(produce.getProduceMugong());
-            update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), "修改为", produce.getProduceMugong(), produce.getProduceMugongComment()));
-        } else if (produce.getProduceYoufang() != null) {
+            update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), "修改为",
+                    produce.getProduceMugong(), produce.getProduceMugongComment()));
+        } else if (produce.getProduceYoufang() != null && produce.getProduceYoufang() >= 0) {
             //修正油房
-            if (produce.getProduceYoufang() < 0) {
-                return ResponseDTO.isError("油房值不能为负数");
-            }
             update.setProduceYoufang(produce.getProduceYoufang());
-            update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), "修改为", produce.getProduceYoufang(), produce.getProduceYoufangComment()));
-        } else if (produce.getProduceBaozhuang() != null) {
+            update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), "修改为",
+                    produce.getProduceYoufang(), produce.getProduceYoufangComment()));
+        } else if (produce.getProduceBaozhuang() != null && produce.getProduceBaozhuang() >= 0) {
             //修正包装
-            if (produce.getProduceBaozhuang() < 0) {
-                return ResponseDTO.isError("包装值不能为负数");
-            }
             update.setProduceBaozhuang(produce.getProduceBaozhuang());
-            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "修改为", produce.getProduceBaozhuang(), produce.getProduceBaozhuangComment()));
-        } else if (produce.getProduceTeding() != null) {
+            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "修改为",
+                    produce.getProduceBaozhuang(), produce.getProduceBaozhuangComment()));
+        } else if (produce.getProduceTeding() != null && produce.getProduceTeding() >= 0) {
             //修正特定
-            if (produce.getProduceTeding() < 0) {
-                return ResponseDTO.isError("特定值不能为负数");
-            }
             update.setProduceTeding(produce.getProduceTeding());
-            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "修改为", produce.getProduceTeding(), produce.getProduceTedingComment()));
-        } else if (produce.getProduceBeijing() != null) {
+            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "修改为",
+                    produce.getProduceTeding(), produce.getProduceTedingComment()));
+        } else if (produce.getProduceBeijing() != null && produce.getProduceBeijing() >= 0) {
             //修正北京
-            if (produce.getProduceBeijing() < 0) {
-                return ResponseDTO.isError("北京值不能为负数");
-            }
             update.setProduceBeijing(produce.getProduceBeijing());
-            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "修改为", produce.getProduceBeijing(), produce.getProduceBeijingComment()));
-        } else if (produce.getProduceBeijingteding() != null) {
+            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "修改为",
+                    produce.getProduceBeijing(), produce.getProduceBeijingComment()));
+        } else if (produce.getProduceBeijingteding() != null && produce.getProduceBeijingteding() >= 0) {
             //修正北京特定
-            if (produce.getProduceBeijingteding() < 0) {
-                return ResponseDTO.isError("北京特定值不能为负数");
-            }
             update.setProduceBeijingteding(produce.getProduceBeijingteding());
-            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "修改为", produce.getProduceBeijingteding(), produce.getProduceBeijingtedingComment()));
-        } else if (produce.getProduceBendihetong() != null) {
+            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "修改为",
+                    produce.getProduceBeijingteding(), produce.getProduceBeijingtedingComment()));
+        } else if (produce.getProduceBendihetong() != null && produce.getProduceBendihetong() >= 0) {
             //修正本地合同
-            if (produce.getProduceBendihetong() < 0) {
-                return ResponseDTO.isError("本地合同值不能为负数");
-            }
             update.setProduceBendihetong(produce.getProduceBendihetong());
-            update.setProduceBendihetongComment(commentAppend(produceSource.getProduceBendihetongComment(), "修改为", produce.getProduceBendihetong(), produce.getProduceBendihetongComment()));
-        } else if (produce.getProduceWaidihetong() != null) {
+            update.setProduceBendihetongComment(commentAppend(produceSource.getProduceBendihetongComment(), "修改为",
+                    produce.getProduceBendihetong(), produce.getProduceBendihetongComment()));
+        } else if (produce.getProduceWaidihetong() != null && produce.getProduceWaidihetong() >= 0) {
             //修正外地合同
-            if (produce.getProduceWaidihetong() < 0) {
-                return ResponseDTO.isError("外地合同值不能为负数");
-            }
             update.setProduceWaidihetong(produce.getProduceWaidihetong());
-            update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), "修改为", produce.getProduceWaidihetong(), produce.getProduceWaidihetongComment()));
-        } else if (produce.getProduceDeng() != null) {
+            update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), "修改为",
+                    produce.getProduceWaidihetong(), produce.getProduceWaidihetongComment()));
+        } else if (produce.getProduceDeng() != null && produce.getProduceDeng() >= 0) {
             //修正等待
-            if (produce.getProduceDeng() < 0) {
-                return ResponseDTO.isError("等待值不能为负数");
-            }
             update.setProduceDeng(produce.getProduceDeng());
-            update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "修改为", produce.getProduceDeng(), produce.getProduceDengComment()));
+            update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "修改为",
+                    produce.getProduceDeng(), produce.getProduceDengComment()));
+        } else {
+            return ResponseDTO.isError("参数值错误");
         }
         //更新到数据库
         try {
@@ -706,5 +537,225 @@ public class ProduceServiceImpl implements ProduceService {
             return sb.append("###").append(origin).toString();
         }
         return sb.toString();
+    }
+
+    private Output getOutputSource(Integer year, Integer month, Integer productId, String productName) {
+        boolean isOutputExist = outputRepository.existsByOutputYearAndOutputMonthAndOutputProductId(year, month, productId);
+        if (!isOutputExist) {
+            Output insert = new Output();
+            insert.setOutputYear(year);
+            insert.setOutputMonth(month);
+            insert.setOutputProductId(productId);
+            insert.setOutputProductName(productName);
+            try {
+                outputRepository.save(insert);
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                throw new GeneralException(ResultEnum.ADD_ERROR.getMessage() + "-产值:" + productName);
+            }
+        }
+        return outputRepository.findByOutputYearAndOutputMonthAndOutputProductId(year, month, productId);
+    }
+
+    private ResponseDTO updateXiaDan(Produce param, Produce produceSource, Produce update) {
+        //下单增加
+        if (param.getProduceXiadan() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        }
+        if (param.getProduceXiadan() + produceSource.getProduceXiadan() < 0) {
+            return ResponseDTO.isError("更新后，下单值为负数");
+        }
+        update.setProduceXiadan(param.getProduceXiadan() + produceSource.getProduceXiadan());
+        update.setProduceXiadanComment(commentAppend(produceSource.getProduceXiadanComment(), "",
+                param.getProduceXiadan(), param.getProduceXiadanComment()));
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateMuGong(Produce param, Produce produceSource, Produce update, Output outputSource) {
+        //进度：木工增加，下单减少
+        //产值：下单增加
+        if (param.getProduceMugong() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        } else if (param.getProduceMugong() > produceSource.getProduceXiadan()) {
+            return ResponseDTO.isError("下单库存不足");
+        } else if (param.getProduceMugong() + produceSource.getProduceMugong() < 0) {
+            return ResponseDTO.isError("退单超过木工库存");
+        }
+        update.setProduceMugong(param.getProduceMugong() + produceSource.getProduceMugong());
+        update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), "",
+                param.getProduceMugong(), param.getProduceMugongComment()));
+        produceSource.setProduceXiadan(produceSource.getProduceXiadan() - param.getProduceMugong());
+        outputSource.setOutputXiadan(outputSource.getOutputXiadan() + param.getProduceMugong());
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateYouFang(Produce param, Produce produceSource, Produce update, Output outputSource) {
+        //进度：油房增加，木工减少
+        //产值：木工增加
+        if (param.getProduceYoufang() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        } else if (param.getProduceYoufang() > produceSource.getProduceMugong()) {
+            return ResponseDTO.isError("木工库存不足");
+        } else if (param.getProduceYoufang() + produceSource.getProduceYoufang() < 0) {
+            return ResponseDTO.isError("退单超过油房库存");
+        }
+        update.setProduceYoufang(param.getProduceYoufang() + produceSource.getProduceYoufang());
+        update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), "",
+                param.getProduceYoufang(), param.getProduceYoufangComment()));
+        produceSource.setProduceMugong(produceSource.getProduceMugong() - param.getProduceYoufang());
+        outputSource.setOutputMugong(outputSource.getOutputMugong() + param.getProduceYoufang());
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateBaoZhuang(Produce param, Produce produceSource, Produce update, Output outputSource) {
+        //进度：包装增加，油房减少
+        //产值：油房增加
+        if (param.getProduceBaozhuang() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        } else if (param.getProduceBaozhuang() > produceSource.getProduceYoufang()) {
+            return ResponseDTO.isError("油房库存不足");
+        } else if (param.getProduceBaozhuang() + produceSource.getProduceBaozhuang() < 0) {
+            return ResponseDTO.isError("退单量超过包装库存");
+        }
+        update.setProduceBaozhuang(param.getProduceBaozhuang() + produceSource.getProduceBaozhuang());
+        update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "",
+                param.getProduceBaozhuang(), param.getProduceBaozhuangComment()));
+        produceSource.setProduceYoufang(produceSource.getProduceYoufang() - param.getProduceBaozhuang());
+        outputSource.setOutputYoufang(outputSource.getOutputYoufang() + param.getProduceBaozhuang());
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateTeDing(Produce param, Produce produceSource, Produce update, Output outputSource) {
+        //进度：特定增加，油房减少
+        //产值：油房增加
+        if (param.getProduceTeding() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        } else if (param.getProduceTeding() > produceSource.getProduceYoufang()) {
+            return ResponseDTO.isError("油房库存不足");
+        } else if (param.getProduceTeding() + produceSource.getProduceTeding() < 0) {
+            return ResponseDTO.isError("退单量超过特定库存");
+        }
+        update.setProduceTeding(param.getProduceTeding() + produceSource.getProduceTeding());
+        update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "",
+                param.getProduceTeding(), param.getProduceTedingComment()));
+        produceSource.setProduceYoufang(produceSource.getProduceYoufang() - param.getProduceTeding());
+        outputSource.setOutputYoufang(outputSource.getOutputYoufang() + param.getProduceTeding());
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateBeiJing(Produce param, Produce produceSource, Produce update, Output outputSource, int flag) {
+        //进度：北京增加，包装减少
+        //产值：包装增加
+        if (param.getProduceBeijing() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        }
+
+        // flag 判断更新是否为北京出货
+        if (flag == Constants.NOT_OUTPUT) {
+            if (param.getProduceBeijing() > produceSource.getProduceBaozhuang()) {
+                return ResponseDTO.isError("包装库存不足");
+            } else if (param.getProduceBeijing() + produceSource.getProduceBeijing() < 0) {
+                return ResponseDTO.isError("退单量超过包装库存");
+            }
+            update.setProduceBeijing(param.getProduceBeijing() + produceSource.getProduceBeijing());
+            produceSource.setProduceBaozhuang(produceSource.getProduceBaozhuang() - param.getProduceBeijing());
+            outputSource.setOutputBaozhuang(outputSource.getOutputBaozhuang() + param.getProduceBeijing());
+
+            Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+            if (product == null) {
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produceSource.getProduceProductId());
+            }
+            outputSource.setOutputBaozhuangTotalPrice(outputSource.getOutputBaozhuang() * product.getProductPrice());
+        } else {
+            //出货->进度：北京减少。产值：北京增加
+            if (param.getProduceBeijing() > produceSource.getProduceBeijing()) {
+                return ResponseDTO.isError("北京库存不足");
+            }
+            update.setProduceBeijing(produceSource.getProduceBeijing() - param.getProduceBeijing());
+            outputSource.setOutputBeijing(outputSource.getOutputBeijing() + param.getProduceBeijing());
+        }
+        update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "",
+                produceSource.getProduceBeijing(), param.getProduceBeijingComment()));
+
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateBeiJingTeDing(Produce param, Produce produceSource, Produce update, Output outputSource, int flag) {
+        //进度：北京特定增加，特定减少
+        //产值：特定增加
+        if (param.getProduceBeijingteding() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        }
+        //判断是否为北京特定出货
+        if (flag == Constants.NOT_OUTPUT) {
+            if (param.getProduceBeijingteding() > produceSource.getProduceTeding()) {
+                return ResponseDTO.isError("特定库存不足");
+            } else if (param.getProduceBeijingteding() + produceSource.getProduceBeijingteding() < 0) {
+                return ResponseDTO.isError("退单量超过北京特定库存");
+            }
+            update.setProduceBeijingteding(param.getProduceBeijingteding() + produceSource.getProduceBeijingteding());
+            produceSource.setProduceTeding(produceSource.getProduceTeding() - param.getProduceBeijingteding());
+            outputSource.setOutputTeding(outputSource.getOutputTeding() + param.getProduceBeijingteding());
+
+            Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+            if (product == null) {
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produceSource.getProduceProductId());
+            }
+            outputSource.setOutputTedingTotalPrice(outputSource.getOutputTeding() * product.getProductPrice());
+        } else {
+            //出货->进度：北京特定减少。产值：北京特定增加
+            if (param.getProduceBeijingteding() > produceSource.getProduceBeijingteding()) {
+                return ResponseDTO.isError("北京特定库存不足");
+            } else {
+                update.setProduceBeijingteding(produceSource.getProduceBeijingteding() - param.getProduceBeijingteding());
+                outputSource.setOutputBeijingteding(outputSource.getOutputBeijingteding() + param.getProduceBeijingteding());
+            }
+        }
+        update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "",
+                produceSource.getProduceBeijingteding(), param.getProduceBeijingtedingComment()));
+
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateBenDiHeTong(Produce param, Produce produceSource, Produce update) {
+        //进度：本地合同自己增加，减少
+        //产值：没有变化
+        if (param.getProduceBendihetong() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        } else if (param.getProduceBendihetong() + produceSource.getProduceBendihetong() < 0) {
+            return ResponseDTO.isError("退单量超过已有本地合同量");
+        }
+        update.setProduceBendihetong(param.getProduceBendihetong() + produceSource.getProduceBendihetong());
+        update.setProduceBendihetongComment(commentAppend(produceSource.getProduceBendihetongComment(), "",
+                param.getProduceBendihetong(), param.getProduceBendihetongComment()));
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateWaiDiHeTong(Produce param, Produce produceSource, Produce update) {
+        //进度：外地合同自己增加，减少
+        //产值：没有变化
+        if (param.getProduceWaidihetong() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        } else if (param.getProduceWaidihetong() + produceSource.getProduceWaidihetong() < 0) {
+            return ResponseDTO.isError("退单量超过已有外地合同量");
+        }
+        update.setProduceWaidihetong(param.getProduceWaidihetong() + produceSource.getProduceWaidihetong());
+        update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), "",
+                param.getProduceWaidihetong(), param.getProduceWaidihetongComment()));
+        return ResponseDTO.isSuccess();
+    }
+
+    private ResponseDTO updateDeng(Produce param, Produce produceSource, Produce update) {
+        //进度：等待增加，减少
+        //产值：没有变化
+        if (param.getProduceDeng() == 0) {
+            return ResponseDTO.isError("更新值不能为 0 ");
+        } else if (param.getProduceDeng() + produceSource.getProduceDeng() < 0) {
+            return ResponseDTO.isError("退单量超过已有等待量");
+        }
+        update.setProduceDeng(param.getProduceDeng() + produceSource.getProduceDeng());
+        update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "",
+                param.getProduceDeng(), param.getProduceDengComment()));
+        return ResponseDTO.isSuccess();
     }
 }
