@@ -35,15 +35,16 @@ public class WebLogAspect {
         HttpServletRequest request = attributes.getRequest();
 
         // 记录下请求内容
-        log.info("URL : {}", request.getRequestURL().toString());
-        log.info("HTTP_METHOD : {}",  request.getMethod());
-        log.info("Last-Skip-IP : {}", request.getHeader("X-Real-IP"));
-        String ips = request.getHeader("X-Forwarded-For");
+        log.info("\nURL : {}\nHTTP_METHOD : {}\nLast-Skip-IP : {}\n\"CLASS_METHOD : {}\nARGS : {}",
+                request.getRequestURL().toString(),
+                request.getMethod(),
+                request.getHeader("X-Real-IP"),
+                joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName(),
+                Arrays.toString(joinPoint.getArgs()));
+       /* String ips = request.getHeader("X-Forwarded-For");
         if (ips != null) {
             log.info("Remote-IP : {}", ips.split(",")[0]);
-        }
-        log.info("CLASS_METHOD : {}", joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName());
-        log.info("ARGS : {}", Arrays.toString(joinPoint.getArgs()));
+        }*/
         startTime.set(System.currentTimeMillis());
 
     }
@@ -51,8 +52,7 @@ public class WebLogAspect {
     @AfterReturning(returning = "ret", pointcut = "webLog()")
     public void doAfterReturning(Object ret) {
         // 处理完请求，返回内容
-        log.info("RESPONSE : {}", ret);
-        log.info("SPEND TIME : {}", (System.currentTimeMillis() - startTime.get()));
+        log.info("RESPONSE : {}\nSPEND TIME : {}", ret, (System.currentTimeMillis() - startTime.get()));
         startTime.remove();
     }
 }
