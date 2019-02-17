@@ -75,6 +75,10 @@ public class OutputServiceImpl implements OutputService {
         if (outputSource == null) {
             return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + output.getOutputId());
         }
+        Product product = productRepository.findByProductId(outputSource.getOutputProductId());
+        if (product == null) {
+            return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + output.getOutputProductName());
+        }
         Output update = new Output();
         if (output.getOutputXiadan() != null) {
             update.setOutputXiadan(output.getOutputXiadan());
@@ -84,22 +88,28 @@ public class OutputServiceImpl implements OutputService {
             update.setOutputYoufang(output.getOutputYoufang());
         } else if (output.getOutputBaozhuang() != null) {
             update.setOutputBaozhuang(output.getOutputBaozhuang());
-            Product product = productRepository.findByProductId(outputSource.getOutputProductId());
-            if (product == null) {
-                return ResponseDTO.isError();
-            }
             update.setOutputBaozhuangTotalPrice(update.getOutputBaozhuang() * product.getProductPrice());
         } else if (output.getOutputTeding() != null) {
             update.setOutputTeding(output.getOutputTeding());
-            Product product = productRepository.findByProductId(outputSource.getOutputProductId());
-            if (product == null) {
-                return ResponseDTO.isError();
-            }
             update.setOutputTedingTotalPrice(update.getOutputTeding() * product.getProductPrice());
-        } else if (output.getOutputBeijing() != null) {
-            update.setOutputBeijing(output.getOutputBeijing());
-        } else if (output.getOutputBeijingteding() != null) {
-            update.setOutputBeijingteding(output.getOutputBeijingteding());
+        } else if (output.getOutputBeijingInput() != null) {
+            update.setOutputBeijingInput(output.getOutputBeijingInput());
+            update.setOutputBeijingInputTotalPrice(update.getOutputBeijingInput() * product.getProductPrice());
+        } else if (output.getOutputBeijingtedingInput() != null) {
+            update.setOutputBeijingtedingInput(output.getOutputBeijingtedingInput());
+            update.setOutputBeijingtedingInputTotalPrice(update.getOutputBeijingtedingInput() * product.getProductPrice());
+        } else if (output.getOutputFactoryOutput() != null) {
+            update.setOutputFactoryOutput(output.getOutputFactoryOutput());
+            update.setOutputFactoryOutputTotalPrice(update.getOutputFactoryOutput() * product.getProductPrice());
+        } else if (output.getOutputTedingFactoryOutput() != null) {
+            update.setOutputTedingFactoryOutput(output.getOutputTedingFactoryOutput());
+            update.setOutputTedingFactoryOutputTotalPrice(update.getOutputTedingFactoryOutput() * product.getProductPrice());
+        } else if (output.getOutputBeijingStock() != null) {
+            update.setOutputBeijingStock(output.getOutputBeijingStock());
+            update.setOutputBeijingStockTotalPrice(update.getOutputBeijingStock() * product.getProductPrice());
+        } else if (output.getOutputBeijingtedingStock() != null) {
+            update.setOutputBeijingtedingStock(output.getOutputBeijingtedingStock());
+            update.setOutputBeijingtedingStockTotalPrice(update.getOutputBeijingtedingStock() * product.getProductPrice());
         }
         UpdateUtils.copyNullProperties(outputSource, update);
         try {
@@ -129,20 +139,35 @@ public class OutputServiceImpl implements OutputService {
                             output.getOutputProductName(),
                             String.valueOf(output.getOutputXiadan()),
                             String.valueOf(output.getOutputMugong()),
+                            String.valueOf(output.getOutputMugongTotalPrice()),
                             String.valueOf(output.getOutputYoufang()),
+                            String.valueOf(output.getOutputYoufangTotalPrice()),
                             String.valueOf(output.getOutputBaozhuang()),
-                            String.valueOf(output.getOutputTeding()),
                             String.valueOf(output.getOutputBaozhuangTotalPrice()),
+                            String.valueOf(output.getOutputTeding()),
                             String.valueOf(output.getOutputTedingTotalPrice()),
-                            String.valueOf(output.getOutputBeijing()),
-                            String.valueOf(output.getOutputBeijingteding())
+                            String.valueOf(output.getOutputBeijingInput()),
+                            String.valueOf(output.getOutputBeijingInputTotalPrice()),
+                            String.valueOf(output.getOutputBeijingtedingInput()),
+                            String.valueOf(output.getOutputBeijingtedingInputTotalPrice()),
+                            String.valueOf(output.getOutputFactoryOutput()),
+                            String.valueOf(output.getOutputFactoryOutputTotalPrice()),
+                            String.valueOf(output.getOutputTedingFactoryOutput()),
+                            String.valueOf(output.getOutputTedingFactoryOutputTotalPrice()),
+                            String.valueOf(output.getOutputBeijingStock()),
+                            String.valueOf(output.getOutputBeijingStockTotalPrice()),
+                            String.valueOf(output.getOutputBeijingtedingStock()),
+                            String.valueOf(output.getOutputBeijingtedingStockTotalPrice())
                     );
                 })
                 .collect(Collectors.toList());
         String title = year + "-" + month + "\t" + Constants.OUTPUT_TITLE;
-        List<String> headers = Arrays.asList(Constants.PRODUCT_NAME, Constants.XIA_DAN, Constants.MU_GONG,
-                Constants.YOU_FANG, Constants.BAO_ZHUANG, Constants.TE_DING, Constants.BAOZHUNAG_TOTAL_PRICE,
-                Constants.TEDING_TOTAL_PRICE, Constants.BEI_JING, Constants.BEI_JING_TE_DING);
+        List<String> headers = Arrays.asList(Constants.PRODUCT_NAME, Constants.XIA_DAN, Constants.MU_GONG, Constants.MU_GONG_TOTAL_PRICE,
+                Constants.YOU_FANG, Constants.YOU_FANG_TOTAL_PRICE, Constants.BAO_ZHUANG, Constants.BAOZHUNAG_TOTAL_PRICE, Constants.TE_DING,
+                Constants.TEDING_TOTAL_PRICE, Constants.BEI_JING_INPUT, Constants.BEI_JING_INPUT_TOTAL_PRICE, Constants.BEI_JING_TEDING_INPUT,
+                Constants.BEI_JING_TEDING_INPUT_TOTAL_PRICE, Constants.FACTORY_OUTPUT, Constants.FACTORY_OUTPUT_TOTAL_PRICE,
+                Constants.TEDING_FACTORY_OUTPUT, Constants.TEDING_FACTORY_OUTPUT_TOTAL_PRICE, Constants.BEIJING_STOCK,
+                Constants.BEIJING_STOCK_TOTAL_PRICE, Constants.BEIJINGTEDING_STOCK, Constants.BEIJINGTEDING_STOCK_TOTAL_PRICE);
         try {
             ExcelUtils.exportData(title, headers, list, outputStream);
         } catch (Exception e) {
@@ -167,24 +192,48 @@ public class OutputServiceImpl implements OutputService {
                 .reduce((x, y) -> new Output()
                         .setOutputXiadan(x.getOutputXiadan() + y.getOutputXiadan())
                         .setOutputMugong(x.getOutputMugong() + y.getOutputMugong())
+                        .setOutputMugongTotalPrice(x.getOutputMugongTotalPrice() + y.getOutputMugongTotalPrice())
                         .setOutputYoufang(x.getOutputYoufang() + y.getOutputYoufang())
+                        .setOutputYoufangTotalPrice(x.getOutputYoufangTotalPrice() + y.getOutputYoufangTotalPrice())
                         .setOutputBaozhuang(x.getOutputBaozhuang() + y.getOutputBaozhuang())
                         .setOutputBaozhuangTotalPrice(x.getOutputBaozhuangTotalPrice() + y.getOutputBaozhuangTotalPrice())
                         .setOutputTeding(x.getOutputTeding() + y.getOutputTeding())
                         .setOutputTedingTotalPrice(x.getOutputTedingTotalPrice() + y.getOutputTedingTotalPrice())
-                        .setOutputBeijing(x.getOutputBeijing() + y.getOutputBeijing())
-                        .setOutputBeijingteding(x.getOutputBeijingteding() + y.getOutputBeijingteding())
+                        .setOutputBeijingInput(x.getOutputBeijingInput() + y.getOutputBeijingInput())
+                        .setOutputBeijingInputTotalPrice(x.getOutputBeijingInputTotalPrice() + y.getOutputBeijingInputTotalPrice())
+                        .setOutputBeijingtedingInput(x.getOutputBeijingtedingInput() + y.getOutputBeijingtedingInput())
+                        .setOutputBeijingtedingInputTotalPrice(x.getOutputBeijingtedingInputTotalPrice() + y.getOutputBeijingtedingInputTotalPrice())
+                        .setOutputFactoryOutput(x.getOutputFactoryOutput() + y.getOutputFactoryOutput())
+                        .setOutputFactoryOutputTotalPrice(x.getOutputFactoryOutputTotalPrice() + y.getOutputFactoryOutputTotalPrice())
+                        .setOutputTedingFactoryOutput(x.getOutputTedingFactoryOutput() + y.getOutputTedingFactoryOutput())
+                        .setOutputTedingFactoryOutputTotalPrice(x.getOutputTedingFactoryOutputTotalPrice() + y.getOutputTedingFactoryOutputTotalPrice())
+                        .setOutputBeijingStock(x.getOutputBeijingStock() + y.getOutputBeijingStock())
+                        .setOutputBeijingStockTotalPrice(x.getOutputBeijingStockTotalPrice() + y.getOutputBeijingStockTotalPrice())
+                        .setOutputBeijingtedingStock(x.getOutputBeijingtedingStock() + y.getOutputBeijingtedingStock())
+                        .setOutputBeijingtedingStockTotalPrice(x.getOutputBeijingtedingStockTotalPrice() + y.getOutputBeijingtedingStockTotalPrice())
                 )
                 .orElse(new Output()
                         .setOutputXiadan(0)
                         .setOutputMugong(0)
+                        .setOutputMugongTotalPrice(0.0F)
                         .setOutputYoufang(0)
+                        .setOutputYoufangTotalPrice(0.0F)
                         .setOutputBaozhuang(0)
                         .setOutputBaozhuangTotalPrice(0.0F)
                         .setOutputTeding(0)
                         .setOutputTedingTotalPrice(0.0F)
-                        .setOutputBeijing(0)
-                        .setOutputBeijingteding(0))
+                        .setOutputBeijingInput(0)
+                        .setOutputBeijingInputTotalPrice(0.0F)
+                        .setOutputBeijingtedingInput(0)
+                        .setOutputBeijingtedingInputTotalPrice(0.0F)
+                        .setOutputFactoryOutput(0)
+                        .setOutputFactoryOutputTotalPrice(0.0F)
+                        .setOutputTedingFactoryOutput(0)
+                        .setOutputTedingFactoryOutputTotalPrice(0.0F)
+                        .setOutputBeijingStock(0)
+                        .setOutputBeijingStockTotalPrice(0.0F)
+                        .setOutputBeijingtedingStock(0)
+                        .setOutputBeijingtedingStockTotalPrice(0.0F))
                 .setOutputProductName("合计");
     }
 }

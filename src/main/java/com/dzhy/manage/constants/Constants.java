@@ -82,6 +82,34 @@ public final class Constants {
 
     public static final String TEDING_TOTAL_PRICE = "特定总金额";
 
+    public static final String MU_GONG_TOTAL_PRICE = "木工总金额";
+
+    public static final String YOU_FANG_TOTAL_PRICE = "油房总金额";
+
+    public static final String BEI_JING_INPUT = "北京入库";
+
+    public static final String BEI_JING_INPUT_TOTAL_PRICE = "北京入库总金额";
+
+    public static final String BEI_JING_TEDING_INPUT = "北京特定入库";
+
+    public static final String BEI_JING_TEDING_INPUT_TOTAL_PRICE = "北京特定入库总金额";
+
+    public static final String FACTORY_OUTPUT = "工厂出货";
+
+    public static final String FACTORY_OUTPUT_TOTAL_PRICE = "工厂出货总金额";
+
+    public static final String TEDING_FACTORY_OUTPUT = "特定工厂出货";
+
+    public static final String TEDING_FACTORY_OUTPUT_TOTAL_PRICE = "特定工厂出货总金额";
+
+    public static final String BEIJING_STOCK = "北京剩余";
+
+    public static final String BEIJING_STOCK_TOTAL_PRICE = "北京剩余总金额";
+
+    public static final String BEIJINGTEDING_STOCK = "北京特定剩余";
+
+    public static final String BEIJINGTEDING_STOCK_TOTAL_PRICE = "北京特定剩余总金额";
+
     /**
      * 更新用户信息
      */

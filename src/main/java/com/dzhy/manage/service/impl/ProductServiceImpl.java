@@ -180,8 +180,16 @@ public class ProductServiceImpl implements ProductService {
             if (product.getProductPrice() != null) {
                 List<Output> outputList = outputRepository.findAllByOutputProductId(update.getProductId());
                 outputList.forEach(output -> {
+                    output.setOutputMugongTotalPrice(output.getOutputMugong() * update.getProductPrice());
+                    output.setOutputYoufangTotalPrice(output.getOutputYoufang() * update.getProductPrice());
                     output.setOutputBaozhuangTotalPrice(output.getOutputBaozhuang() * update.getProductPrice());
                     output.setOutputTedingTotalPrice(output.getOutputTeding() * update.getProductPrice());
+                    output.setOutputBeijingInputTotalPrice(output.getOutputBeijingInput() * update.getProductPrice());
+                    output.setOutputBeijingtedingInputTotalPrice(output.getOutputBeijingtedingInput() * update.getProductPrice());
+                    output.setOutputFactoryOutputTotalPrice(output.getOutputFactoryOutput() * update.getProductPrice());
+                    output.setOutputTedingFactoryOutputTotalPrice(output.getOutputTedingFactoryOutput() * update.getProductPrice());
+                    output.setOutputBeijingStockTotalPrice(output.getOutputBeijingStock() * update.getProductPrice());
+                    output.setOutputBeijingtedingStockTotalPrice(output.getOutputBeijingtedingStock() * update.getProductPrice());
                 });
                 outputRepository.saveAll(outputList);
             }

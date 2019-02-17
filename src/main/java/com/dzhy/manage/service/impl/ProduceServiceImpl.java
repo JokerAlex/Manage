@@ -179,6 +179,10 @@ public class ProduceServiceImpl implements ProduceService {
         }
         List<Produce> insertList = produceList.stream()
                 .map(produce -> {
+                    Product product = productRepository.findByProductName(produce.getProduceProductName());
+                    if (product == null) {
+                        throw new GeneralException(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produce.getProduceProductName());
+                    }
                     Produce p = new Produce();
                     BeanUtils.copyProperties(produce, p);
                     p.setProduceId(null);
@@ -294,12 +298,12 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceYoufang() != null && !updateYouFang(produce, produceSource, update, outputSource).isOk()) {
             //油房
             return updateYouFang(produce, produceSource, update, outputSource);
-        } else if (produce.getProduceBaozhuang() != null && !updateBaoZhuang(produce, produceSource, update, outputSource).isOk()) {
+        } else if (produce.getProduceBaozhuang() != null && !updateBaoZhuang(produce, produceSource, update, outputSource, flag).isOk()) {
             //包装
-            return updateBaoZhuang(produce, produceSource, update, outputSource);
-        } else if (produce.getProduceTeding() != null && !updateTeDing(produce, produceSource, update, outputSource).isOk()) {
+            return updateBaoZhuang(produce, produceSource, update, outputSource, flag);
+        } else if (produce.getProduceTeding() != null && !updateTeDing(produce, produceSource, update, outputSource, flag).isOk()) {
             //特定
-            return updateTeDing(produce, produceSource, update, outputSource);
+            return updateTeDing(produce, produceSource, update, outputSource, flag);
         } else if (produce.getProduceBeijing() != null && !updateBeiJing(produce, produceSource, update, outputSource, flag).isOk()) {
             //北京
             return updateBeiJing(produce, produceSource, update, outputSource, flag);
@@ -599,120 +603,224 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (param.getProduceYoufang() + produceSource.getProduceYoufang() < 0) {
             return ResponseDTO.isError("退单超过油房库存");
         }
+        //获取产品价格
+        Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+        if (product == null) {
+            return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
+        }
         update.setProduceYoufang(param.getProduceYoufang() + produceSource.getProduceYoufang());
         update.setProduceYoufangComment(commentAppend(produceSource.getProduceYoufangComment(), "",
                 param.getProduceYoufang(), param.getProduceYoufangComment()));
         produceSource.setProduceMugong(produceSource.getProduceMugong() - param.getProduceYoufang());
+        //木工产值
         outputSource.setOutputMugong(outputSource.getOutputMugong() + param.getProduceYoufang());
+        outputSource.setOutputMugongTotalPrice(outputSource.getOutputMugong() * product.getProductPrice());
         return ResponseDTO.isSuccess();
     }
 
-    private ResponseDTO updateBaoZhuang(Produce param, Produce produceSource, Produce update, Output outputSource) {
-        //进度：包装增加，油房减少
-        //产值：油房增加
+    private ResponseDTO updateBaoZhuang(Produce param, Produce produceSource, Produce update, Output outputSource, int flag) {
         if (param.getProduceBaozhuang() == 0) {
             return ResponseDTO.isError("更新值不能为 0 ");
-        } else if (param.getProduceBaozhuang() > produceSource.getProduceYoufang()) {
-            return ResponseDTO.isError("油房库存不足");
-        } else if (param.getProduceBaozhuang() + produceSource.getProduceBaozhuang() < 0) {
-            return ResponseDTO.isError("退单量超过包装库存");
         }
-        update.setProduceBaozhuang(param.getProduceBaozhuang() + produceSource.getProduceBaozhuang());
-        update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "",
-                param.getProduceBaozhuang(), param.getProduceBaozhuangComment()));
-        produceSource.setProduceYoufang(produceSource.getProduceYoufang() - param.getProduceBaozhuang());
-        outputSource.setOutputYoufang(outputSource.getOutputYoufang() + param.getProduceBaozhuang());
+
+        //判断是否工厂出货
+        if (flag == Constants.NOT_OUTPUT) {
+            //进度：包装增加，油房减少
+            //产值：油房增加
+            if (param.getProduceBaozhuang() > produceSource.getProduceYoufang()) {
+                return ResponseDTO.isError("油房库存不足");
+            } else if (param.getProduceBaozhuang() + produceSource.getProduceBaozhuang() < 0) {
+                return ResponseDTO.isError("退单量超过包装库存");
+            }
+            //获取产品价格
+            Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+            if (product == null) {
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
+            }
+            update.setProduceBaozhuang(param.getProduceBaozhuang() + produceSource.getProduceBaozhuang());
+            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "",
+                    param.getProduceBaozhuang(), param.getProduceBaozhuangComment()));
+            produceSource.setProduceYoufang(produceSource.getProduceYoufang() - param.getProduceBaozhuang());
+            //油房产值
+            outputSource.setOutputYoufang(outputSource.getOutputYoufang() + param.getProduceBaozhuang());
+            outputSource.setOutputYoufangTotalPrice(outputSource.getOutputYoufang() * product.getProductPrice());
+        } else {
+            //工厂直接出货
+            //进度：包装减少
+            //产值：工厂出货增加，包装产值增加
+            if (param.getProduceBaozhuang() > produceSource.getProduceBaozhuang()) {
+                return ResponseDTO.isError("包装库存不足");
+            }
+            //获取产品价格
+            Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+            if (product == null) {
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
+            }
+            update.setProduceBaozhuang(produceSource.getProduceBaozhuang() - param.getProduceBaozhuang());
+            update.setProduceBaozhuangComment(commentAppend(produceSource.getProduceBaozhuangComment(), "工厂出货",
+                    param.getProduceBaozhuang(), param.getProduceBaozhuangComment()));
+            //包装产值
+            outputSource.setOutputBaozhuang(outputSource.getOutputBaozhuang() + param.getProduceBaozhuang());
+            outputSource.setOutputBaozhuangTotalPrice(outputSource.getOutputBaozhuang() * product.getProductPrice());
+            //工厂出货
+            outputSource.setOutputFactoryOutput(outputSource.getOutputFactoryOutput() + param.getProduceBaozhuang());
+            outputSource.setOutputFactoryOutputTotalPrice(outputSource.getOutputFactoryOutput() * product.getProductPrice());
+        }
         return ResponseDTO.isSuccess();
     }
 
-    private ResponseDTO updateTeDing(Produce param, Produce produceSource, Produce update, Output outputSource) {
-        //进度：特定增加，油房减少
-        //产值：油房增加
+    private ResponseDTO updateTeDing(Produce param, Produce produceSource, Produce update, Output outputSource, int flag) {
         if (param.getProduceTeding() == 0) {
             return ResponseDTO.isError("更新值不能为 0 ");
-        } else if (param.getProduceTeding() > produceSource.getProduceYoufang()) {
-            return ResponseDTO.isError("油房库存不足");
-        } else if (param.getProduceTeding() + produceSource.getProduceTeding() < 0) {
-            return ResponseDTO.isError("退单量超过特定库存");
         }
-        update.setProduceTeding(param.getProduceTeding() + produceSource.getProduceTeding());
-        update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "",
-                param.getProduceTeding(), param.getProduceTedingComment()));
-        produceSource.setProduceYoufang(produceSource.getProduceYoufang() - param.getProduceTeding());
-        outputSource.setOutputYoufang(outputSource.getOutputYoufang() + param.getProduceTeding());
+        //判断是否工厂出货
+        if (flag == Constants.NOT_OUTPUT) {
+            //进度：特定增加，油房减少
+            //产值：油房增加
+            if (param.getProduceTeding() > produceSource.getProduceYoufang()) {
+                return ResponseDTO.isError("油房库存不足");
+            } else if (param.getProduceTeding() + produceSource.getProduceTeding() < 0) {
+                return ResponseDTO.isError("退单量超过特定库存");
+            }
+            //获取产品价格
+            Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+            if (product == null) {
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
+            }
+            update.setProduceTeding(param.getProduceTeding() + produceSource.getProduceTeding());
+            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "",
+                    param.getProduceTeding(), param.getProduceTedingComment()));
+            produceSource.setProduceYoufang(produceSource.getProduceYoufang() - param.getProduceTeding());
+            //油房产值
+            outputSource.setOutputYoufang(outputSource.getOutputYoufang() + param.getProduceTeding());
+            outputSource.setOutputYoufangTotalPrice(outputSource.getOutputYoufang() * product.getProductPrice());
+        } else {
+            //工厂直接出货
+            //进度：特定减少
+            //产值：特定工厂出货增加，特定产值增加
+            if (param.getProduceTeding() > produceSource.getProduceTeding()) {
+                return ResponseDTO.isError("特定库存不足");
+            }
+            //获取产品价格
+            Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+            if (product == null) {
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
+            }
+            update.setProduceTeding(produceSource.getProduceTeding() - param.getProduceTeding());
+            update.setProduceTedingComment(commentAppend(produceSource.getProduceTedingComment(), "工厂直接出货",
+                    param.getProduceTeding(), param.getProduceTedingComment()));
+            //特定产值
+            outputSource.setOutputTeding(outputSource.getOutputTeding() + param.getProduceTeding());
+            outputSource.setOutputTedingTotalPrice(outputSource.getOutputTeding() * product.getProductPrice());
+            //特定工厂出货
+            outputSource.setOutputTedingFactoryOutput(outputSource.getOutputTedingFactoryOutput() + param.getProduceTeding());
+            outputSource.setOutputTedingFactoryOutputTotalPrice(outputSource.getOutputTedingFactoryOutput() * product.getProductPrice());
+        }
+
         return ResponseDTO.isSuccess();
     }
 
     private ResponseDTO updateBeiJing(Produce param, Produce produceSource, Produce update, Output outputSource, int flag) {
-        //进度：北京增加，包装减少
-        //产值：包装增加
         if (param.getProduceBeijing() == 0) {
             return ResponseDTO.isError("更新值不能为 0 ");
         }
 
         // flag 判断更新是否为北京出货
         if (flag == Constants.NOT_OUTPUT) {
+            //进度：北京增加，包装减少
+            //产值：包装增加
             if (param.getProduceBeijing() > produceSource.getProduceBaozhuang()) {
                 return ResponseDTO.isError("包装库存不足");
             } else if (param.getProduceBeijing() + produceSource.getProduceBeijing() < 0) {
                 return ResponseDTO.isError("退单量超过包装库存");
             }
-            update.setProduceBeijing(param.getProduceBeijing() + produceSource.getProduceBeijing());
-            produceSource.setProduceBaozhuang(produceSource.getProduceBaozhuang() - param.getProduceBeijing());
-            outputSource.setOutputBaozhuang(outputSource.getOutputBaozhuang() + param.getProduceBeijing());
-
             Product product = productRepository.findByProductId(produceSource.getProduceProductId());
             if (product == null) {
-                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produceSource.getProduceProductId());
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
             }
+            update.setProduceBeijing(param.getProduceBeijing() + produceSource.getProduceBeijing());
+            produceSource.setProduceBaozhuang(produceSource.getProduceBaozhuang() - param.getProduceBeijing());
+            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "",
+                    produceSource.getProduceBeijing(), param.getProduceBeijingComment()));
+            //包装产值增加
+            outputSource.setOutputBaozhuang(outputSource.getOutputBaozhuang() + param.getProduceBeijing());
             outputSource.setOutputBaozhuangTotalPrice(outputSource.getOutputBaozhuang() * product.getProductPrice());
+            //北京入库
+            outputSource.setOutputBeijingInput(outputSource.getOutputBeijingInput() + param.getProduceBeijing());
+            outputSource.setOutputBeijingInputTotalPrice(outputSource.getOutputBeijingInput() * product.getProductPrice());
+            //北京剩余增加
+            outputSource.setOutputBeijingStock(outputSource.getOutputBeijingStock() + param.getProduceBeijing());
+            outputSource.setOutputBeijingStockTotalPrice(outputSource.getOutputBeijingStock() * product.getProductPrice());
         } else {
-            //出货->进度：北京减少。产值：北京增加
+            //出货
+            //进度：北京减少
+            //产值：北京剩余减少
             if (param.getProduceBeijing() > produceSource.getProduceBeijing()) {
                 return ResponseDTO.isError("北京库存不足");
             }
+            Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+            if (product == null) {
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
+            }
             update.setProduceBeijing(produceSource.getProduceBeijing() - param.getProduceBeijing());
-            outputSource.setOutputBeijing(outputSource.getOutputBeijing() + param.getProduceBeijing());
+            update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "出货",
+                    produceSource.getProduceBeijing(), param.getProduceBeijingComment()));
+            //北京剩余，减少
+            outputSource.setOutputBeijingStock(outputSource.getOutputBeijingStock() - param.getProduceBeijing());
+            outputSource.setOutputBeijingStockTotalPrice(outputSource.getOutputBeijingStock() * product.getProductPrice());
         }
-        update.setProduceBeijingComment(commentAppend(produceSource.getProduceBeijingComment(), "",
-                produceSource.getProduceBeijing(), param.getProduceBeijingComment()));
 
         return ResponseDTO.isSuccess();
     }
 
     private ResponseDTO updateBeiJingTeDing(Produce param, Produce produceSource, Produce update, Output outputSource, int flag) {
-        //进度：北京特定增加，特定减少
-        //产值：特定增加
         if (param.getProduceBeijingteding() == 0) {
             return ResponseDTO.isError("更新值不能为 0 ");
         }
         //判断是否为北京特定出货
         if (flag == Constants.NOT_OUTPUT) {
+            //进度：北京特定增加，特定减少
+            //产值：特定增加
             if (param.getProduceBeijingteding() > produceSource.getProduceTeding()) {
                 return ResponseDTO.isError("特定库存不足");
             } else if (param.getProduceBeijingteding() + produceSource.getProduceBeijingteding() < 0) {
                 return ResponseDTO.isError("退单量超过北京特定库存");
             }
-            update.setProduceBeijingteding(param.getProduceBeijingteding() + produceSource.getProduceBeijingteding());
-            produceSource.setProduceTeding(produceSource.getProduceTeding() - param.getProduceBeijingteding());
-            outputSource.setOutputTeding(outputSource.getOutputTeding() + param.getProduceBeijingteding());
-
             Product product = productRepository.findByProductId(produceSource.getProduceProductId());
             if (product == null) {
-                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + produceSource.getProduceProductId());
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
             }
+            update.setProduceBeijingteding(param.getProduceBeijingteding() + produceSource.getProduceBeijingteding());
+            produceSource.setProduceTeding(produceSource.getProduceTeding() - param.getProduceBeijingteding());
+            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "",
+                    produceSource.getProduceBeijingteding(), param.getProduceBeijingtedingComment()));
+            //特定产值
+            outputSource.setOutputTeding(outputSource.getOutputTeding() + param.getProduceBeijingteding());
             outputSource.setOutputTedingTotalPrice(outputSource.getOutputTeding() * product.getProductPrice());
+            //北京特定入库
+            outputSource.setOutputBeijingtedingInput(outputSource.getOutputBeijingtedingInput() + param.getProduceBeijingteding());
+            outputSource.setOutputBeijingtedingInputTotalPrice(outputSource.getOutputBeijingtedingInput() * product.getProductPrice());
+            //北京特定剩余增加
+            outputSource.setOutputBeijingtedingStock(outputSource.getOutputBeijingtedingStock() + param.getProduceBeijingteding());
+            outputSource.setOutputBeijingtedingStockTotalPrice(outputSource.getOutputBeijingtedingStock() * product.getProductPrice());
         } else {
-            //出货->进度：北京特定减少。产值：北京特定增加
+            //出货
+            //进度：北京特定减少./pa
+            //产值：北京特定剩余减少
             if (param.getProduceBeijingteding() > produceSource.getProduceBeijingteding()) {
                 return ResponseDTO.isError("北京特定库存不足");
-            } else {
-                update.setProduceBeijingteding(produceSource.getProduceBeijingteding() - param.getProduceBeijingteding());
-                outputSource.setOutputBeijingteding(outputSource.getOutputBeijingteding() + param.getProduceBeijingteding());
             }
+            Product product = productRepository.findByProductId(produceSource.getProduceProductId());
+            if (product == null) {
+                return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produceSource.getProduceProductName());
+            }
+            update.setProduceBeijingteding(produceSource.getProduceBeijingteding() - param.getProduceBeijingteding());
+            update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "出货",
+                    produceSource.getProduceBeijingteding(), param.getProduceBeijingtedingComment()));
+            //北京剩余，减少
+            outputSource.setOutputBeijingtedingStock(outputSource.getOutputBeijingtedingStock() - param.getProduceBeijingteding());
+            outputSource.setOutputBeijingtedingStockTotalPrice(outputSource.getOutputBeijingtedingStock() * product.getProductPrice());
         }
-        update.setProduceBeijingtedingComment(commentAppend(produceSource.getProduceBeijingtedingComment(), "",
-                produceSource.getProduceBeijingteding(), param.getProduceBeijingtedingComment()));
 
         return ResponseDTO.isSuccess();
     }

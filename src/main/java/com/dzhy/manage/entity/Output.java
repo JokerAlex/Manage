@@ -39,7 +39,11 @@ public class Output {
 
     private Integer outputMugong;
 
+    private Float outputMugongTotalPrice;
+
     private Integer outputYoufang;
+
+    private Float outputYoufangTotalPrice;
 
     private Integer outputBaozhuang;
 
@@ -49,9 +53,29 @@ public class Output {
 
     private Float outputTedingTotalPrice;
 
-    private Integer outputBeijing;
+    private Integer outputBeijingInput;
 
-    private Integer outputBeijingteding;
+    private Float outputBeijingInputTotalPrice;
+
+    private Integer outputBeijingtedingInput;
+
+    private Float outputBeijingtedingInputTotalPrice;
+
+    private Integer outputFactoryOutput;
+
+    private Float outputFactoryOutputTotalPrice;
+
+    private Integer outputTedingFactoryOutput;
+
+    private Float outputTedingFactoryOutputTotalPrice;
+
+    private Integer outputBeijingStock;
+
+    private Float outputBeijingStockTotalPrice;
+
+    private Integer outputBeijingtedingStock;
+
+    private Float outputBeijingtedingStockTotalPrice;
 
     private Date outputCreateTime;
 
