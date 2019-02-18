@@ -1,5 +1,6 @@
 package com.dzhy.manage.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.DynamicInsert;
@@ -7,6 +8,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import java.util.Date;
 
@@ -21,10 +23,11 @@ import java.util.Date;
 @DynamicUpdate
 @Accessors(chain = true)
 @Data
+@AllArgsConstructor
 public class Produce {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer produceId;
 
     private Integer produceYear;
@@ -73,9 +76,11 @@ public class Produce {
 
     private String produceWaidihetongComment;
 
-    private Integer produceDeng;
+    private Float produceProductPrice;
 
-    private String produceDengComment;
+    //private Integer produceDeng;
+
+    //private String produceDengComment;
 
     private Date produceCreateTime;
 
@@ -85,17 +90,18 @@ public class Produce {
     }
 
     public Produce(Integer produceYear, Integer produceMonth, Integer produceDay,
-                   Integer produceProductId, String produceProductName,
+                   Integer produceProductId, String produceProductName, Float produceProductPrice,
                    Integer produceXiadan, String produceXiadanComment, Integer produceMugong, String produceMugongComment,
                    Integer produceYoufang, String produceYoufangComment, Integer produceBaozhuang, String produceBaozhuangComment,
                    Integer produceTeding, String produceTedingComment, Integer produceBeijing, String produceBeijingComment,
                    Integer produceBeijingteding, String produceBeijingtedingComment, Integer produceBendihetong, String produceBendihetongComment,
-                   Integer produceWaidihetong, String produceWaidihetongComment, Integer produceDeng, String produceDengComment) {
+                   Integer produceWaidihetong, String produceWaidihetongComment) {
         this.produceYear = produceYear;
         this.produceMonth = produceMonth;
         this.produceDay = produceDay;
         this.produceProductId = produceProductId;
         this.produceProductName = produceProductName;
+        this.produceProductPrice = produceProductPrice;
         this.produceXiadan = produceXiadan;
         this.produceXiadanComment = produceXiadanComment;
         this.produceMugong = produceMugong;
@@ -114,7 +120,7 @@ public class Produce {
         this.produceBendihetongComment = produceBendihetongComment;
         this.produceWaidihetong = produceWaidihetong;
         this.produceWaidihetongComment = produceWaidihetongComment;
-        this.produceDeng = produceDeng;
-        this.produceDengComment = produceDengComment;
+        //this.produceDeng = produceDeng;
+        //this.produceDengComment = produceDengComment;
     }
 }
