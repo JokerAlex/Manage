@@ -27,7 +27,7 @@ public class UserInfoRepositoryTest {
     public void saveTest() {
         UserInfo userInfo = new UserInfo();
         //userInfo.setUserInfoId(3);
-        userInfo.setUserInfoName("hahah");
+        userInfo.setUserInfoName("test");
         userInfo.setUserInfoPass("123456");
         userInfo.setUserInfoTrueName("zzz");
         userInfo.setUserInfoRoles("USER");

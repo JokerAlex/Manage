@@ -66,9 +66,6 @@ public class ProduceServiceImplTest {
 
         //produce.setProduceWaidihetong(10);
         //produce.setProduceWaidihetongComment("wai di he tong + 10");
-
-        produce.setProduceDeng(10);
-        produce.setProduceDengComment("deng + 10");
         ResponseDTO r = produceService.updateProduce(produce, Constants.NOT_OUTPUT);
         System.out.println(r.toString());
     }
@@ -106,8 +103,6 @@ public class ProduceServiceImplTest {
 
         //produce.setProduceWaidihetong(100);
         //produce.setProduceWaidihetongComment("wai di he tong + 10");
-
-        produce.setProduceDeng(100);
         //produce.setProduceDengComment("deng + 10");
         ResponseDTO r = produceService.changeProduce(produce);
         System.out.println(r.toString());

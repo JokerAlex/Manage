@@ -3,6 +3,7 @@ package com.dzhy.manage.service.impl;
 import com.dzhy.manage.constants.Constants;
 import com.dzhy.manage.dto.ResponseDTO;
 import com.dzhy.manage.entity.Output;
+import com.dzhy.manage.entity.Produce;
 import com.dzhy.manage.entity.Product;
 import com.dzhy.manage.enums.ResultEnum;
 import com.dzhy.manage.exception.GeneralException;
@@ -12,6 +13,7 @@ import com.dzhy.manage.repository.ProduceRepository;
 import com.dzhy.manage.repository.ProductRepository;
 import com.dzhy.manage.service.ProductService;
 import com.dzhy.manage.util.ExcelUtils;
+import com.dzhy.manage.util.FileUtil;
 import com.dzhy.manage.util.FtpUtil;
 import com.dzhy.manage.util.UpdateUtils;
 import com.google.common.collect.Lists;
@@ -46,17 +48,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProductServiceImpl implements ProductService {
 
-    @Value("${manage.ftp.ip}")
-    private String ftpIp;
-
-    @Value("${manage.ftp.username}")
-    private String ftpUsername;
-
-    @Value("${manage.ftp.pass}")
-    private String ftpPass;
-
-    @Value("${manage.ftp.path}")
-    private String ftpPath;
+    @Value("${manage.img.filePath}")
+    private String filePath;
 
     @Value("${manage.fileType}")
     private String[] fileTypes;
@@ -192,6 +185,9 @@ public class ProductServiceImpl implements ProductService {
                     output.setOutputBeijingtedingStockTotalPrice(output.getOutputBeijingtedingStock() * update.getProductPrice());
                 });
                 outputRepository.saveAll(outputList);
+                List<Produce> produceList = produceRepository.findAllByProduceProductId(update.getProductId());
+                produceList.forEach(produce -> produce.setProduceProductPrice(update.getProductPrice()));
+                produceRepository.saveAll(produceList);
             }
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -211,9 +207,12 @@ public class ProductServiceImpl implements ProductService {
             return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage());
         }
         List<String> pictureNameList = Lists.newArrayList();
-        Map<String, InputStream> map = new LinkedHashMap<>(multipartFiles.size());
+        Map<String, MultipartFile> map = new LinkedHashMap<>(multipartFiles.size());
         //图片重命名
         for (MultipartFile multipartFile : multipartFiles) {
+            if (multipartFile.isEmpty()) {
+                return ResponseDTO.isError("图片错误");
+            }
             String originalFilename = multipartFile.getOriginalFilename();
             assert originalFilename != null;
             String fileType = originalFilename.substring(originalFilename.lastIndexOf("."));
@@ -221,28 +220,25 @@ public class ProductServiceImpl implements ProductService {
                 return ResponseDTO.isError("图片格式错误");
             }
             String fileName = UUID.randomUUID().toString().replace("-", "") + fileType;
-            map.put(fileName, multipartFile.getInputStream());
+            map.put(fileName, multipartFile);
             pictureNameList.add(fileName);
         }
-        boolean uploadResult = FtpUtil.uploadFile(map, ftpIp, ftpUsername, ftpPass, ftpPath);
-        if (uploadResult) {
-            //产品保存图片信息
-            log.info("productImg : {}", product.getProductImg());
-            StringBuilder sb = new StringBuilder();
-            if (StringUtils.isNotBlank(product.getProductImg())) {
-                sb.append(product.getProductImg()).append(",");
-            }
-            sb.append(StringUtils.join(pictureNameList, ","));
-            product.setProductImg(sb.toString());
-            try {
-                productRepository.save(product);
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
-            }
-            return ResponseDTO.isSuccess();
+        FileUtil.upload(map, filePath);
+        //产品保存图片信息
+        log.info("productImg : {}", product.getProductImg());
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.isNotBlank(product.getProductImg())) {
+            sb.append(product.getProductImg()).append(",");
         }
-        return ResponseDTO.isError();
+        sb.append(StringUtils.join(pictureNameList, ","));
+        product.setProductImg(sb.toString());
+        try {
+            productRepository.save(product);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
+        }
+        return ResponseDTO.isSuccess();
     }
 
     @Override
@@ -260,10 +256,10 @@ public class ProductServiceImpl implements ProductService {
             return ResponseDTO.isError("该产品没有图片");
         }
         //删除文件
-        boolean delFileResult = FtpUtil.delFile(fileNames, ftpIp, ftpUsername, ftpPass, ftpPath);
+        FileUtil.del(fileNames, filePath);
         List<String> pictureList = Lists.newArrayList(product.getProductImg().split(","));
         boolean delImgStr = pictureList.removeAll(fileNames);
-        log.info("[deletePictures] productId : {}, delFileResult : {}, delImgStr : {}", productId, delFileResult, delImgStr);
+        log.info("[deletePictures] productId : {}, delImgStr : {}", productId, delImgStr);
         //产品图片信息更新
         product.setProductImg(StringUtils.join(pictureList, ","));
         try {
@@ -317,8 +313,10 @@ public class ProductServiceImpl implements ProductService {
                     pictures.addAll(Lists.newArrayList(product.getProductImg().split(",")));
                 }
             }
-            boolean delFileResult = FtpUtil.delFile(pictures, ftpIp, ftpUsername, ftpPass, ftpPath);
-            log.info("[deleteProductBatch] delFileResult : {}, pictures : {}", delFileResult, pictures.toString());
+            if (CollectionUtils.isNotEmpty(pictures)) {
+                FileUtil.del(pictures, filePath);
+            }
+            log.info("[deleteProductBatch] pictures : {}", pictures.toString());
             productRepository.deleteAllByProductIdIn(productIds);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -371,6 +369,7 @@ public class ProductServiceImpl implements ProductService {
     private static class MySpec {
         /**
          * 动态查询语句
+         *
          * @param productName
          * @param categoryId
          * @return

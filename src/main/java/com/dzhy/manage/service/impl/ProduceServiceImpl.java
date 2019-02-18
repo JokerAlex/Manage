@@ -68,6 +68,10 @@ public class ProduceServiceImpl implements ProduceService {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
         }
 
+        Product product = productRepository.findByProductId(produce.getProduceProductId());
+        if (product == null) {
+            throw new GeneralException(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produce.getProduceProductName());
+        }
         LocalDate date = LocalDate.now();
         boolean isExist = produceRepository.existsByProduceYearAndProduceMonthAndProduceDayAndProduceProductId(date.getYear(),
                 date.getMonthValue(), date.getDayOfMonth(), produce.getProduceProductId());
@@ -82,8 +86,10 @@ public class ProduceServiceImpl implements ProduceService {
         insert.setProduceDay(date.getDayOfMonth());
         insert.setProduceProductId(produce.getProduceProductId());
         insert.setProduceProductName(produce.getProduceProductName());
+        insert.setProduceProductPrice(product.getProductPrice());
         insert.setProduceXiadan(produce.getProduceXiadan());
-        insert.setProduceXiadanComment(produce.getProduceXiadanComment());
+        insert.setProduceXiadanComment(commentAppend("", "",
+                produce.getProduceXiadan(), produce.getProduceXiadanComment()));
 
         try {
             produceRepository.save(insert);
@@ -131,6 +137,7 @@ public class ProduceServiceImpl implements ProduceService {
                             date.getDayOfMonth(),
                             product.getProductId(),
                             product.getProductName(),
+                            Float.valueOf(row.get(Constants.PRICE)),
                             Integer.valueOf(row.get(Constants.XIA_DAN)),
                             row.get(Constants.XIA_DAN_COMMENT),
                             Integer.valueOf(row.get(Constants.MU_GONG)),
@@ -148,9 +155,9 @@ public class ProduceServiceImpl implements ProduceService {
                             Integer.valueOf(row.get(Constants.BEN_DI_HE_TONG)),
                             row.get(Constants.BEN_DI_HE_TONG_COMMENT),
                             Integer.valueOf(row.get(Constants.WAI_DI_HE_TONG)),
-                            row.get(Constants.WAI_DI_HE_TONG_COMMENT),
-                            Integer.valueOf(row.get(Constants.DENG)),
-                            row.get(Constants.DENG_COMMENT)
+                            row.get(Constants.WAI_DI_HE_TONG_COMMENT)
+                            //Integer.valueOf(row.get(Constants.DENG)),
+                            //row.get(Constants.DENG_COMMENT)
                     );
                 })
                 .collect(Collectors.toList());
@@ -179,7 +186,7 @@ public class ProduceServiceImpl implements ProduceService {
         }
         List<Produce> insertList = produceList.stream()
                 .map(produce -> {
-                    Product product = productRepository.findByProductName(produce.getProduceProductName());
+                    Product product = productRepository.findByProductId(produce.getProduceProductId());
                     if (product == null) {
                         throw new GeneralException(ResultEnum.NOT_FOUND.getMessage() + "-名称:" + produce.getProduceProductName());
                     }
@@ -202,7 +209,7 @@ public class ProduceServiceImpl implements ProduceService {
                         p.setProduceBeijingtedingComment(null);
                         p.setProduceBendihetongComment(null);
                         p.setProduceWaidihetongComment(null);
-                        p.setProduceDengComment(null);
+                        //p.setProduceDengComment(null);
                     }
                     return p;
                 })
@@ -230,37 +237,34 @@ public class ProduceServiceImpl implements ProduceService {
         produceList.add(total);
         List<List<String>> list = produceList.stream()
                 .map(produce -> {
-                    return Lists.newArrayList(
+                    return Arrays.asList(
                             produce.getProduceProductName(),
+                            String.valueOf(produce.getProduceProductPrice()),
                             String.valueOf(produce.getProduceXiadan()),
-                            produce.getProduceXiadanComment(),
                             String.valueOf(produce.getProduceMugong()),
-                            produce.getProduceMugongComment(),
+                            String.valueOf(produce.getProduceMugong() * produce.getProduceProductPrice()),
                             String.valueOf(produce.getProduceYoufang()),
-                            produce.getProduceYoufangComment(),
+                            String.valueOf(produce.getProduceYoufang() * produce.getProduceProductPrice()),
                             String.valueOf(produce.getProduceBaozhuang()),
-                            produce.getProduceBaozhuangComment(),
+                            String.valueOf(produce.getProduceBaozhuang() * produce.getProduceProductPrice()),
                             String.valueOf(produce.getProduceTeding()),
-                            produce.getProduceTedingComment(),
+                            String.valueOf(produce.getProduceTeding() * produce.getProduceProductPrice()),
                             String.valueOf(produce.getProduceBeijing()),
-                            produce.getProduceBeijingComment(),
+                            String.valueOf(produce.getProduceBeijing() * produce.getProduceProductPrice()),
                             String.valueOf(produce.getProduceBeijingteding()),
-                            produce.getProduceBeijingtedingComment(),
+                            String.valueOf(produce.getProduceBeijingteding() * produce.getProduceProductPrice()),
                             String.valueOf(produce.getProduceBendihetong()),
-                            produce.getProduceBendihetongComment(),
+                            String.valueOf(produce.getProduceBendihetong() * produce.getProduceProductPrice()),
                             String.valueOf(produce.getProduceWaidihetong()),
-                            produce.getProduceWaidihetongComment(),
-                            String.valueOf(produce.getProduceDeng()),
-                            produce.getProduceDengComment()
+                            String.valueOf(produce.getProduceWaidihetong() * produce.getProduceProductPrice())
                     );
                 })
                 .collect(Collectors.toList());
-        List<String> headers = Arrays.asList(Constants.PRODUCT_NAME, Constants.XIA_DAN, Constants.XIA_DAN_COMMENT,
+        List<String> headers = Arrays.asList(Constants.PRODUCT_NAME, Constants.PRICE, Constants.XIA_DAN,
                 Constants.MU_GONG, Constants.MU_GONG_COMMENT, Constants.YOU_FANG, Constants.YOU_FANG_COMMENT,
                 Constants.BAO_ZHUANG, Constants.BAO_ZHUANG_COMMENT, Constants.TE_DING, Constants.TE_DING_COMMENT,
                 Constants.BEI_JING, Constants.BEI_JING_COMMENT, Constants.BEI_JING_TE_DING, Constants.BEI_JING_TE_DING_COMMENT,
-                Constants.BEN_DI_HE_TONG, Constants.BEN_DI_HE_TONG_COMMENT, Constants.WAI_DI_HE_TONG, Constants.WAI_DI_HE_TONG_COMMENT,
-                Constants.DENG, Constants.DENG_COMMENT);
+                Constants.BEN_DI_HE_TONG, Constants.BEN_DI_HE_TONG_COMMENT, Constants.WAI_DI_HE_TONG, Constants.WAI_DI_HE_TONG_COMMENT);
         String title = year + "-" + month + "-" + day + "\t" + Constants.PRODUCE_TITLE;
         try {
             ExcelUtils.exportData(title, headers, list, outputStream);
@@ -316,14 +320,15 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceWaidihetong() != null && !updateWaiDiHeTong(produce, produceSource, update).isOk()) {
             //外地合同
             return updateWaiDiHeTong(produce, produceSource, update);
-        } else if (produce.getProduceDeng() != null && !updateDeng(produce, produceSource, update).isOk()) {
-            //等待
-            return updateDeng(produce, produceSource, update);
         }
+        //else if (produce.getProduceDeng() != null && !updateDeng(produce, produceSource, update).isOk()) {
+            //等待
+        //    return updateDeng(produce, produceSource, update);
+        //}
         //更新到数据库
         try {
             //本地合同、外地合同、等待不影响产值
-            if (produce.getProduceBendihetong() == null && produce.getProduceWaidihetong() == null && produce.getProduceDeng() == null) {
+            if (produce.getProduceBendihetong() == null && produce.getProduceWaidihetong() == null) {
                 outputRepository.save(outputSource);
             }
             UpdateUtils.copyNullProperties(produceSource, update);
@@ -393,12 +398,14 @@ public class ProduceServiceImpl implements ProduceService {
             update.setProduceWaidihetong(produce.getProduceWaidihetong());
             update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), "修改为",
                     produce.getProduceWaidihetong(), produce.getProduceWaidihetongComment()));
-        } else if (produce.getProduceDeng() != null && produce.getProduceDeng() >= 0) {
+        }
+        /*else if (produce.getProduceDeng() != null && produce.getProduceDeng() >= 0) {
             //修正等待
             update.setProduceDeng(produce.getProduceDeng());
             update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "修改为",
                     produce.getProduceDeng(), produce.getProduceDengComment()));
-        } else {
+        }*/
+        else {
             return ResponseDTO.isError("参数值错误");
         }
         //更新到数据库
@@ -496,32 +503,40 @@ public class ProduceServiceImpl implements ProduceService {
 
     private Produce getTotal(List<Produce> produceList) {
         //计算属性值合计
-        return produceList.stream()
-                .reduce((x, y) ->
-                        new Produce()
-                                .setProduceXiadan(x.getProduceXiadan() + y.getProduceXiadan())
-                                .setProduceMugong(x.getProduceMugong() + y.getProduceMugong())
-                                .setProduceYoufang(x.getProduceYoufang() + y.getProduceYoufang())
-                                .setProduceBaozhuang(x.getProduceBaozhuang() + y.getProduceBaozhuang())
-                                .setProduceTeding(x.getProduceTeding() + y.getProduceTeding())
-                                .setProduceBeijing(x.getProduceBeijing() + y.getProduceBeijing())
-                                .setProduceBeijingteding(x.getProduceBeijingteding() + y.getProduceBeijingteding())
-                                .setProduceBendihetong(x.getProduceBendihetong() + y.getProduceBendihetong())
-                                .setProduceWaidihetong(x.getProduceWaidihetong() + y.getProduceWaidihetong())
-                                .setProduceDeng(x.getProduceDeng() + y.getProduceDeng())
-                )
-                .orElse(new Produce()
-                        .setProduceXiadan(0)
-                        .setProduceMugong(0)
-                        .setProduceYoufang(0)
-                        .setProduceBaozhuang(0)
-                        .setProduceTeding(0)
-                        .setProduceBeijing(0)
-                        .setProduceBeijingteding(0)
-                        .setProduceBendihetong(0)
-                        .setProduceWaidihetong(0)
-                        .setProduceDeng(0))
-                .setProduceProductName("合计");
+        if (produceList.size() == 1) {
+            Produce p = new Produce();
+            UpdateUtils.copyNullProperties(produceList.get(0), p);
+            p.setProduceProductName("合计");
+            return p;
+        } else {
+            return produceList.stream()
+                    .reduce((x, y) ->
+                                    new Produce()
+                                            .setProduceXiadan(x.getProduceXiadan() + y.getProduceXiadan())
+                                            .setProduceMugong(x.getProduceMugong() + y.getProduceMugong())
+                                            .setProduceYoufang(x.getProduceYoufang() + y.getProduceYoufang())
+                                            .setProduceBaozhuang(x.getProduceBaozhuang() + y.getProduceBaozhuang())
+                                            .setProduceTeding(x.getProduceTeding() + y.getProduceTeding())
+                                            .setProduceBeijing(x.getProduceBeijing() + y.getProduceBeijing())
+                                            .setProduceBeijingteding(x.getProduceBeijingteding() + y.getProduceBeijingteding())
+                                            .setProduceBendihetong(x.getProduceBendihetong() + y.getProduceBendihetong())
+                                            .setProduceWaidihetong(x.getProduceWaidihetong() + y.getProduceWaidihetong())
+                            //.setProduceDeng(x.getProduceDeng() + y.getProduceDeng())
+                    )
+                    .orElse(new Produce()
+                                    .setProduceXiadan(0)
+                                    .setProduceMugong(0)
+                                    .setProduceYoufang(0)
+                                    .setProduceBaozhuang(0)
+                                    .setProduceTeding(0)
+                                    .setProduceBeijing(0)
+                                    .setProduceBeijingteding(0)
+                                    .setProduceBendihetong(0)
+                                    .setProduceWaidihetong(0)
+                            //.setProduceDeng(0)
+                    )
+                    .setProduceProductName("合计");
+        }
     }
 
     private String commentAppend(String origin, String str, Integer num, String newComment) {
@@ -853,7 +868,7 @@ public class ProduceServiceImpl implements ProduceService {
         return ResponseDTO.isSuccess();
     }
 
-    private ResponseDTO updateDeng(Produce param, Produce produceSource, Produce update) {
+    /*private ResponseDTO updateDeng(Produce param, Produce produceSource, Produce update) {
         //进度：等待增加，减少
         //产值：没有变化
         if (param.getProduceDeng() == 0) {
@@ -865,5 +880,5 @@ public class ProduceServiceImpl implements ProduceService {
         update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "",
                 param.getProduceDeng(), param.getProduceDengComment()));
         return ResponseDTO.isSuccess();
-    }
+    }*/
 }

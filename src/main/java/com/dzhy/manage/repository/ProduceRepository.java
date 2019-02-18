@@ -32,4 +32,6 @@ public interface ProduceRepository extends JpaRepository<Produce, Integer> {
     Page<Produce> findAllByProduceYearAndProduceMonthAndProduceDayAndProduceProductNameContaining(Integer produceYear, Integer produceMonth, Integer produceDay, String produceProductName, Pageable pageable);
 
     List<Produce> findAllByProduceYearAndProduceMonthAndProduceDay(Integer produceYear, Integer produceMonth, Integer produceDay);
+
+    List<Produce> findAllByProduceProductId(Integer produceProductId);
 }
