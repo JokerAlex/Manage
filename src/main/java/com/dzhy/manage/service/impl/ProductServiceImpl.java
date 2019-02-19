@@ -166,11 +166,15 @@ public class ProductServiceImpl implements ProductService {
         update.setCategoryId(product.getCategoryId());
         log.info("[addProduct] product = {}", product.toString());
         Product source = productRepository.findByProductId(product.getProductId());
+        boolean isPriceUpdate = true;
+        if (source.getProductPrice().equals(update.getProductPrice())) {
+            isPriceUpdate = false;
+        }
         UpdateUtils.copyNullProperties(source, update);
         try {
             productRepository.save(update);
             //判断价格是否更新
-            if (product.getProductPrice() != null) {
+            if (isPriceUpdate) {
                 List<Output> outputList = outputRepository.findAllByOutputProductId(update.getProductId());
                 outputList.forEach(output -> {
                     output.setOutputMugongTotalPrice(output.getOutputMugong() * update.getProductPrice());
