@@ -1,5 +1,6 @@
 package com.dzhy.manage.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.DynamicInsert;
@@ -22,6 +23,7 @@ import java.util.Date;
 @DynamicUpdate
 @Data
 @Accessors(chain = true)
+@AllArgsConstructor
 public class Output {
 
     @Id

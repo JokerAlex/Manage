@@ -14,7 +14,6 @@ import com.dzhy.manage.repository.ProductRepository;
 import com.dzhy.manage.service.ProduceService;
 import com.dzhy.manage.util.ExcelUtils;
 import com.dzhy.manage.util.UpdateUtils;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +32,7 @@ import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -156,8 +156,6 @@ public class ProduceServiceImpl implements ProduceService {
                             row.get(Constants.BEN_DI_HE_TONG_COMMENT),
                             Integer.valueOf(row.get(Constants.WAI_DI_HE_TONG)),
                             row.get(Constants.WAI_DI_HE_TONG_COMMENT)
-                            //Integer.valueOf(row.get(Constants.DENG)),
-                            //row.get(Constants.DENG_COMMENT)
                     );
                 })
                 .collect(Collectors.toList());
@@ -209,7 +207,6 @@ public class ProduceServiceImpl implements ProduceService {
                         p.setProduceBeijingtedingComment(null);
                         p.setProduceBendihetongComment(null);
                         p.setProduceWaidihetongComment(null);
-                        //p.setProduceDengComment(null);
                     }
                     return p;
                 })
@@ -235,31 +232,75 @@ public class ProduceServiceImpl implements ProduceService {
         //计算属性值合计
         Produce total = getTotal(produceList);
         produceList.add(total);
-        List<List<String>> list = produceList.stream()
-                .map(produce -> {
-                    return Arrays.asList(
-                            produce.getProduceProductName(),
-                            String.valueOf(produce.getProduceProductPrice()),
-                            String.valueOf(produce.getProduceXiadan()),
-                            String.valueOf(produce.getProduceMugong()),
-                            String.valueOf(produce.getProduceMugong() * produce.getProduceProductPrice()),
-                            String.valueOf(produce.getProduceYoufang()),
-                            String.valueOf(produce.getProduceYoufang() * produce.getProduceProductPrice()),
-                            String.valueOf(produce.getProduceBaozhuang()),
-                            String.valueOf(produce.getProduceBaozhuang() * produce.getProduceProductPrice()),
-                            String.valueOf(produce.getProduceTeding()),
-                            String.valueOf(produce.getProduceTeding() * produce.getProduceProductPrice()),
-                            String.valueOf(produce.getProduceBeijing()),
-                            String.valueOf(produce.getProduceBeijing() * produce.getProduceProductPrice()),
-                            String.valueOf(produce.getProduceBeijingteding()),
-                            String.valueOf(produce.getProduceBeijingteding() * produce.getProduceProductPrice()),
-                            String.valueOf(produce.getProduceBendihetong()),
-                            String.valueOf(produce.getProduceBendihetong() * produce.getProduceProductPrice()),
-                            String.valueOf(produce.getProduceWaidihetong()),
-                            String.valueOf(produce.getProduceWaidihetong() * produce.getProduceProductPrice())
-                    );
-                })
-                .collect(Collectors.toList());
+        float mugongPrice = 0.0F;
+        float youfangPrice = 0.0F;
+        float baozhuangPrice = 0.0F;
+        float tedingPrice = 0.0F;
+        float beijingPrice = 0.0F;
+        float beijingtedingPrice = 0.0F;
+        float bendihetongPrice = 0.0F;
+        float waidihetongPrice = 0.0F;
+
+        List<List<String>> list = new ArrayList<>();
+        int i = 0;
+        for (Produce produce : produceList) {
+            i++;
+            if (i < produceList.size()) {
+                List<String> strings = Arrays.asList(
+                        produce.getProduceProductName(),
+                        String.valueOf(produce.getProduceProductPrice()),
+                        String.valueOf(produce.getProduceXiadan()),
+                        String.valueOf(produce.getProduceMugong()),
+                        String.valueOf(produce.getProduceMugong() * produce.getProduceProductPrice()),
+                        String.valueOf(produce.getProduceYoufang()),
+                        String.valueOf(produce.getProduceYoufang() * produce.getProduceProductPrice()),
+                        String.valueOf(produce.getProduceBaozhuang()),
+                        String.valueOf(produce.getProduceBaozhuang() * produce.getProduceProductPrice()),
+                        String.valueOf(produce.getProduceTeding()),
+                        String.valueOf(produce.getProduceTeding() * produce.getProduceProductPrice()),
+                        String.valueOf(produce.getProduceBeijing()),
+                        String.valueOf(produce.getProduceBeijing() * produce.getProduceProductPrice()),
+                        String.valueOf(produce.getProduceBeijingteding()),
+                        String.valueOf(produce.getProduceBeijingteding() * produce.getProduceProductPrice()),
+                        String.valueOf(produce.getProduceBendihetong()),
+                        String.valueOf(produce.getProduceBendihetong() * produce.getProduceProductPrice()),
+                        String.valueOf(produce.getProduceWaidihetong()),
+                        String.valueOf(produce.getProduceWaidihetong() * produce.getProduceProductPrice())
+                );
+                mugongPrice += produce.getProduceMugong() * produce.getProduceProductPrice();
+                youfangPrice += produce.getProduceYoufang() * produce.getProduceProductPrice();
+                baozhuangPrice += produce.getProduceBaozhuang() * produce.getProduceProductPrice();
+                tedingPrice += produce.getProduceTeding() * produce.getProduceProductPrice();
+                beijingPrice += produce.getProduceBeijing() * produce.getProduceProductPrice();
+                beijingtedingPrice += produce.getProduceBeijingteding() * produce.getProduceProductPrice();
+                bendihetongPrice += produce.getProduceBendihetong() * produce.getProduceProductPrice();
+                waidihetongPrice += produce.getProduceWaidihetong() * produce.getProduceProductPrice();
+                list.add(strings);
+            } else {
+                List<String> strings = Arrays.asList(
+                        produce.getProduceProductName(),
+                        String.valueOf(0),
+                        String.valueOf(produce.getProduceXiadan()),
+                        String.valueOf(produce.getProduceMugong()),
+                        String.valueOf(mugongPrice),
+                        String.valueOf(produce.getProduceYoufang()),
+                        String.valueOf(youfangPrice),
+                        String.valueOf(produce.getProduceBaozhuang()),
+                        String.valueOf(baozhuangPrice),
+                        String.valueOf(produce.getProduceTeding()),
+                        String.valueOf(tedingPrice),
+                        String.valueOf(produce.getProduceBeijing()),
+                        String.valueOf(beijingPrice),
+                        String.valueOf(produce.getProduceBeijingteding()),
+                        String.valueOf(beijingtedingPrice),
+                        String.valueOf(produce.getProduceBendihetong()),
+                        String.valueOf(bendihetongPrice),
+                        String.valueOf(produce.getProduceWaidihetong()),
+                        String.valueOf(waidihetongPrice)
+                );
+                list.add(strings);
+            }
+        }
         List<String> headers = Arrays.asList(Constants.PRODUCT_NAME, Constants.PRICE, Constants.XIA_DAN,
                 Constants.MU_GONG, Constants.MU_GONG_COMMENT, Constants.YOU_FANG, Constants.YOU_FANG_COMMENT,
                 Constants.BAO_ZHUANG, Constants.BAO_ZHUANG_COMMENT, Constants.TE_DING, Constants.TE_DING_COMMENT,
@@ -320,12 +361,10 @@ public class ProduceServiceImpl implements ProduceService {
         } else if (produce.getProduceWaidihetong() != null && !updateWaiDiHeTong(produce, produceSource, update).isOk()) {
             //外地合同
             return updateWaiDiHeTong(produce, produceSource, update);
+        } else {
+            //return ResponseDTO.isError(ResultEnum.ILLEGAL_PARAMETER.getMessage() + "数据为空");
+            log.error("");
         }
-        //else if (produce.getProduceDeng() != null && !updateDeng(produce, produceSource, update).isOk()) {
-            //等待
-        //    return updateDeng(produce, produceSource, update);
-        //}
-        //更新到数据库
         try {
             //本地合同、外地合同、等待不影响产值
             if (produce.getProduceBendihetong() == null && produce.getProduceWaidihetong() == null) {
@@ -398,14 +437,7 @@ public class ProduceServiceImpl implements ProduceService {
             update.setProduceWaidihetong(produce.getProduceWaidihetong());
             update.setProduceWaidihetongComment(commentAppend(produceSource.getProduceWaidihetongComment(), "修改为",
                     produce.getProduceWaidihetong(), produce.getProduceWaidihetongComment()));
-        }
-        /*else if (produce.getProduceDeng() != null && produce.getProduceDeng() >= 0) {
-            //修正等待
-            update.setProduceDeng(produce.getProduceDeng());
-            update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "修改为",
-                    produce.getProduceDeng(), produce.getProduceDengComment()));
-        }*/
-        else {
+        } else {
             return ResponseDTO.isError("参数值错误");
         }
         //更新到数据库
@@ -561,11 +593,13 @@ public class ProduceServiceImpl implements ProduceService {
     private Output getOutputSource(Integer year, Integer month, Integer productId, String productName) {
         boolean isOutputExist = outputRepository.existsByOutputYearAndOutputMonthAndOutputProductId(year, month, productId);
         if (!isOutputExist) {
-            Output insert = new Output();
-            insert.setOutputYear(year);
-            insert.setOutputMonth(month);
-            insert.setOutputProductId(productId);
-            insert.setOutputProductName(productName);
+            Output insert = new Output(null, year, month, productId, productName,
+                    0, 0, 0.0F, 0, 0.0F,
+                    0, 0.0F, 0, 0.0F,
+                    0, 0.0F, 0, 0.0F,
+                    0, 0.0F, 0, 0.0F,
+                    0, 0.0F, 0, 0.0F,
+                    null, null);
             try {
                 outputRepository.save(insert);
             } catch (Exception e) {
@@ -867,18 +901,4 @@ public class ProduceServiceImpl implements ProduceService {
                 param.getProduceWaidihetong(), param.getProduceWaidihetongComment()));
         return ResponseDTO.isSuccess();
     }
-
-    /*private ResponseDTO updateDeng(Produce param, Produce produceSource, Produce update) {
-        //进度：等待增加，减少
-        //产值：没有变化
-        if (param.getProduceDeng() == 0) {
-            return ResponseDTO.isError("更新值不能为 0 ");
-        } else if (param.getProduceDeng() + produceSource.getProduceDeng() < 0) {
-            return ResponseDTO.isError("退单量超过已有等待量");
-        }
-        update.setProduceDeng(param.getProduceDeng() + produceSource.getProduceDeng());
-        update.setProduceDengComment(commentAppend(produceSource.getProduceDengComment(), "",
-                param.getProduceDeng(), param.getProduceDengComment()));
-        return ResponseDTO.isSuccess();
-    }*/
 }
