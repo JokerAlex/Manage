@@ -3,14 +3,14 @@ package com.dzhy.manage.util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,6 +54,7 @@ public class ExcelUtils {
     private static List<List<String>> read(Sheet sheet) {
         return StreamSupport.stream(sheet.spliterator(), true)
                 .filter(Objects::nonNull)
+                .filter(row -> row.getLastCellNum() != 1)
                 .map(row -> StreamSupport.stream(row.spliterator(), false)
                         .map(cell -> {
                             String cellValue;
@@ -103,9 +104,8 @@ public class ExcelUtils {
         listList.remove(0);
 
         List<Map<String, String>> mapList = new ArrayList<>(listList.size());
-        Map<String, String> row;
         for (List<String> aListList : listList) {
-            row = new HashMap<>(colName.size());
+            Map<String, String> row = new HashMap<>(colName.size());
             for (int j = 0; j < colName.size(); j++) {
                 row.put(colName.get(j), aListList.get(j));
             }
@@ -170,14 +170,6 @@ public class ExcelUtils {
             for (int j = 0; j < rowSize; j++) {
                 cell = row.createCell(j);
                 String data = list.get(i).get(j);
-
-                /*cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                cellStyle.setFillForegroundColor(IndexedColors.WHITE.getIndex());
-                if (rowSize > 8 && (j== 7 || j == 8 || j == 11 || j == 12)) {
-                    //设置颜色
-                    cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                    cellStyle.setFillForegroundColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
-                }*/
                 boolean isNum = false;
                 boolean isInteger=false;
                 boolean isPercent=false;

@@ -123,4 +123,25 @@ public class Produce {
         //this.produceDeng = produceDeng;
         //this.produceDengComment = produceDengComment;
     }
+
+    public Produce(Integer produceYear, Integer produceMonth, Integer produceDay, Integer produceProductId,
+                   String produceProductName, Integer produceXiadan, Integer produceMugong, Integer produceYoufang,
+                   Integer produceBaozhuang, Integer produceTeding, Integer produceBeijing, Integer produceBeijingteding,
+                   Integer produceBendihetong, Integer produceWaidihetong, Float produceProductPrice) {
+        this.produceYear = produceYear;
+        this.produceMonth = produceMonth;
+        this.produceDay = produceDay;
+        this.produceProductId = produceProductId;
+        this.produceProductName = produceProductName;
+        this.produceXiadan = produceXiadan;
+        this.produceMugong = produceMugong;
+        this.produceYoufang = produceYoufang;
+        this.produceBaozhuang = produceBaozhuang;
+        this.produceTeding = produceTeding;
+        this.produceBeijing = produceBeijing;
+        this.produceBeijingteding = produceBeijingteding;
+        this.produceBendihetong = produceBendihetong;
+        this.produceWaidihetong = produceWaidihetong;
+        this.produceProductPrice = produceProductPrice;
+    }
 }

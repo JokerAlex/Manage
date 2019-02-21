@@ -126,6 +126,7 @@ public class ProduceServiceImpl implements ProduceService {
         //excel文件读取，写入数据库
         List<Map<String, String>> readResult = ExcelUtils.readToMapList(multipartFile.getInputStream());
         List<Produce> produceList = readResult.stream()
+                .filter(row -> !"合计".equals(row.get(Constants.PRODUCT_NAME)))
                 .map(row -> {
                     Product product = productRepository.findByProductName(row.get(Constants.PRODUCT_NAME));
                     if (product == null) {
@@ -137,25 +138,25 @@ public class ProduceServiceImpl implements ProduceService {
                             date.getDayOfMonth(),
                             product.getProductId(),
                             product.getProductName(),
-                            Float.valueOf(row.get(Constants.PRICE)),
                             Integer.valueOf(row.get(Constants.XIA_DAN)),
-                            row.get(Constants.XIA_DAN_COMMENT),
+                            //row.get(Constants.XIA_DAN_COMMENT),
                             Integer.valueOf(row.get(Constants.MU_GONG)),
-                            row.get(Constants.MU_GONG_COMMENT),
+                            //row.get(Constants.MU_GONG_COMMENT),
                             Integer.valueOf(row.get(Constants.YOU_FANG)),
-                            row.get(Constants.YOU_FANG_COMMENT),
+                            //row.get(Constants.YOU_FANG_COMMENT),
                             Integer.valueOf(row.get(Constants.BAO_ZHUANG)),
-                            row.get(Constants.BAO_ZHUANG_COMMENT),
+                            //row.get(Constants.BAO_ZHUANG_COMMENT),
                             Integer.valueOf(row.get(Constants.TE_DING)),
-                            row.get(Constants.TE_DING_COMMENT),
+                            //row.get(Constants.TE_DING_COMMENT),
                             Integer.valueOf(row.get(Constants.BEI_JING)),
-                            row.get(Constants.BEI_JING_COMMENT),
+                            //row.get(Constants.BEI_JING_COMMENT),
                             Integer.valueOf(row.get(Constants.BEI_JING_TE_DING)),
-                            row.get(Constants.BEI_JING_TE_DING_COMMENT),
+                            //row.get(Constants.BEI_JING_TE_DING_COMMENT),
                             Integer.valueOf(row.get(Constants.BEN_DI_HE_TONG)),
-                            row.get(Constants.BEN_DI_HE_TONG_COMMENT),
+                            //row.get(Constants.BEN_DI_HE_TONG_COMMENT),
                             Integer.valueOf(row.get(Constants.WAI_DI_HE_TONG)),
-                            row.get(Constants.WAI_DI_HE_TONG_COMMENT)
+                            Float.valueOf(row.get(Constants.PRICE))
+                            //row.get(Constants.WAI_DI_HE_TONG_COMMENT)
                     );
                 })
                 .collect(Collectors.toList());
