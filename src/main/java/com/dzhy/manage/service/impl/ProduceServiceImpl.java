@@ -364,7 +364,7 @@ public class ProduceServiceImpl implements ProduceService {
             return updateWaiDiHeTong(produce, produceSource, update);
         } else {
             //return ResponseDTO.isError(ResultEnum.ILLEGAL_PARAMETER.getMessage() + "数据为空");
-            log.error("");
+            log.error("字段错误");
         }
         try {
             //本地合同、外地合同、等待不影响产值
@@ -634,6 +634,8 @@ public class ProduceServiceImpl implements ProduceService {
             return ResponseDTO.isError("下单库存不足");
         } else if (param.getProduceMugong() + produceSource.getProduceMugong() < 0) {
             return ResponseDTO.isError("退单超过木工库存");
+        } else if (outputSource.getOutputXiadan() + param.getProduceMugong() < 0) {
+            return ResponseDTO.isError("退单后下单产值为负数");
         }
         update.setProduceMugong(param.getProduceMugong() + produceSource.getProduceMugong());
         update.setProduceMugongComment(commentAppend(produceSource.getProduceMugongComment(), "",
@@ -652,6 +654,8 @@ public class ProduceServiceImpl implements ProduceService {
             return ResponseDTO.isError("木工库存不足");
         } else if (param.getProduceYoufang() + produceSource.getProduceYoufang() < 0) {
             return ResponseDTO.isError("退单超过油房库存");
+        } else if (outputSource.getOutputMugong() + param.getProduceYoufang() < 0) {
+            return ResponseDTO.isError("退单后木工产值为负数");
         }
         //获取产品价格
         Product product = productRepository.findByProductId(produceSource.getProduceProductId());
@@ -681,6 +685,8 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("油房库存不足");
             } else if (param.getProduceBaozhuang() + produceSource.getProduceBaozhuang() < 0) {
                 return ResponseDTO.isError("退单量超过包装库存");
+            } else if (outputSource.getOutputYoufang() + param.getProduceBaozhuang() < 0) {
+                return ResponseDTO.isError("退单后油房产值为负数");
             }
             //获取产品价格
             Product product = productRepository.findByProductId(produceSource.getProduceProductId());
@@ -700,6 +706,10 @@ public class ProduceServiceImpl implements ProduceService {
             //产值：工厂出货增加，包装产值增加
             if (param.getProduceBaozhuang() > produceSource.getProduceBaozhuang()) {
                 return ResponseDTO.isError("包装库存不足");
+            } else if (outputSource.getOutputBaozhuang() + param.getProduceBaozhuang() < 0) {
+                return ResponseDTO.isError("退单后包装产值为负数");
+            } else if (outputSource.getOutputFactoryOutput() + param.getProduceBaozhuang() < 0) {
+                return ResponseDTO.isError("退单后工厂出货产值为负数");
             }
             //获取产品价格
             Product product = productRepository.findByProductId(produceSource.getProduceProductId());
@@ -731,6 +741,8 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("油房库存不足");
             } else if (param.getProduceTeding() + produceSource.getProduceTeding() < 0) {
                 return ResponseDTO.isError("退单量超过特定库存");
+            } else if (outputSource.getOutputYoufang() + param.getProduceTeding() < 0) {
+                return ResponseDTO.isError("退单后油房产值为负数");
             }
             //获取产品价格
             Product product = productRepository.findByProductId(produceSource.getProduceProductId());
@@ -750,6 +762,10 @@ public class ProduceServiceImpl implements ProduceService {
             //产值：特定工厂出货增加，特定产值增加
             if (param.getProduceTeding() > produceSource.getProduceTeding()) {
                 return ResponseDTO.isError("特定库存不足");
+            } else if (outputSource.getOutputTeding() + param.getProduceTeding() < 0) {
+                return ResponseDTO.isError("退单后特定产值为负数");
+            } else if (outputSource.getOutputTedingFactoryOutput() + param.getProduceTeding() < 0) {
+                return ResponseDTO.isError("退单后特定工厂出货产值为负数");
             }
             //获取产品价格
             Product product = productRepository.findByProductId(produceSource.getProduceProductId());
@@ -783,6 +799,12 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("包装库存不足");
             } else if (param.getProduceBeijing() + produceSource.getProduceBeijing() < 0) {
                 return ResponseDTO.isError("退单量超过包装库存");
+            } else if (outputSource.getOutputBaozhuang() + param.getProduceBeijing() < 0) {
+                return ResponseDTO.isError("退单后包装产值为负数");
+            } else if (outputSource.getOutputBeijingInput() + param.getProduceBeijing() < 0) {
+                return ResponseDTO.isError("退单后北京入库为负数");
+            } else if (outputSource.getOutputBeijingStock() + param.getProduceBeijing() < 0) {
+                return ResponseDTO.isError("退单后北京剩余为负数");
             }
             Product product = productRepository.findByProductId(produceSource.getProduceProductId());
             if (product == null) {
@@ -835,6 +857,10 @@ public class ProduceServiceImpl implements ProduceService {
                 return ResponseDTO.isError("特定库存不足");
             } else if (param.getProduceBeijingteding() + produceSource.getProduceBeijingteding() < 0) {
                 return ResponseDTO.isError("退单量超过北京特定库存");
+            } else if (outputSource.getOutputBeijingtedingInput() + param.getProduceBeijingteding() < 0) {
+                return ResponseDTO.isError("退单后北京特定入库为负数");
+            } else if (outputSource.getOutputBeijingtedingStock() + param.getProduceBeijingteding() < 0) {
+                return ResponseDTO.isError("退单后北京特定剩余为负数");
             }
             Product product = productRepository.findByProductId(produceSource.getProduceProductId());
             if (product == null) {
