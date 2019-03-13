@@ -75,7 +75,7 @@ public class ProduceServiceImpl implements ProduceService {
         LocalDate date = LocalDate.now();
         boolean isExist = produceRepository.existsByProduceYearAndProduceMonthAndProduceDayAndProduceProductId(date.getYear(),
                 date.getMonthValue(), date.getDayOfMonth(), produce.getProduceProductId());
-        log.info("[addProduce] isExist = {}", isExist);
+        log.info("isExist = {}", isExist);
         if (isExist) {
             return ResponseDTO.isError(ResultEnum.IS_EXIST.getMessage());
         }
@@ -93,7 +93,7 @@ public class ProduceServiceImpl implements ProduceService {
 
         try {
             produceRepository.save(insert);
-            log.info("[addProduce] produce = {}", insert.toString());
+            log.info("add produce success, produce = {}", insert);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.ADD_ERROR.getMessage());
@@ -115,7 +115,7 @@ public class ProduceServiceImpl implements ProduceService {
         }
 
         String fileName = multipartFile.getOriginalFilename();
-        log.info("fileName = {}", fileName);
+        log.info("produce fileName = {}", fileName);
         //判断文件类型
         //读取文件内容并存储
         assert fileName != null;
@@ -338,28 +338,36 @@ public class ProduceServiceImpl implements ProduceService {
         if (produce.getProduceXiadan() != null && !updateXiaDan(produce, produceSource, update).isOk()) {
             //下单
             return updateXiaDan(produce, produceSource, update);
-        } else if (produce.getProduceMugong() != null && !updateMuGong(produce, produceSource, update, outputSource).isOk()) {
+        } else if (produce.getProduceMugong() != null
+                && !updateMuGong(produce, produceSource, update, outputSource).isOk()) {
             //木工
             return updateMuGong(produce, produceSource, update, outputSource);
-        } else if (produce.getProduceYoufang() != null && !updateYouFang(produce, produceSource, update, outputSource).isOk()) {
+        } else if (produce.getProduceYoufang() != null
+                && !updateYouFang(produce, produceSource, update, outputSource).isOk()) {
             //油房
             return updateYouFang(produce, produceSource, update, outputSource);
-        } else if (produce.getProduceBaozhuang() != null && !updateBaoZhuang(produce, produceSource, update, outputSource, flag).isOk()) {
+        } else if (produce.getProduceBaozhuang() != null
+                && !updateBaoZhuang(produce, produceSource, update, outputSource, flag).isOk()) {
             //包装
             return updateBaoZhuang(produce, produceSource, update, outputSource, flag);
-        } else if (produce.getProduceTeding() != null && !updateTeDing(produce, produceSource, update, outputSource, flag).isOk()) {
+        } else if (produce.getProduceTeding() != null
+                && !updateTeDing(produce, produceSource, update, outputSource, flag).isOk()) {
             //特定
             return updateTeDing(produce, produceSource, update, outputSource, flag);
-        } else if (produce.getProduceBeijing() != null && !updateBeiJing(produce, produceSource, update, outputSource, flag).isOk()) {
+        } else if (produce.getProduceBeijing() != null
+                && !updateBeiJing(produce, produceSource, update, outputSource, flag).isOk()) {
             //北京
             return updateBeiJing(produce, produceSource, update, outputSource, flag);
-        } else if (produce.getProduceBeijingteding() != null && !updateBeiJingTeDing(produce, produceSource, update, outputSource, flag).isOk()) {
+        } else if (produce.getProduceBeijingteding() != null
+                && !updateBeiJingTeDing(produce, produceSource, update, outputSource, flag).isOk()) {
             //北京特定
             return updateBeiJingTeDing(produce, produceSource, update, outputSource, flag);
-        } else if (produce.getProduceBendihetong() != null && !updateBenDiHeTong(produce, produceSource, update).isOk()) {
+        } else if (produce.getProduceBendihetong() != null
+                && !updateBenDiHeTong(produce, produceSource, update).isOk()) {
             //本地合同
             return updateBenDiHeTong(produce, produceSource, update);
-        } else if (produce.getProduceWaidihetong() != null && !updateWaiDiHeTong(produce, produceSource, update).isOk()) {
+        } else if (produce.getProduceWaidihetong() != null
+                && !updateWaiDiHeTong(produce, produceSource, update).isOk()) {
             //外地合同
             return updateWaiDiHeTong(produce, produceSource, update);
         } else {
@@ -370,10 +378,11 @@ public class ProduceServiceImpl implements ProduceService {
             //本地合同、外地合同、等待不影响产值
             if (produce.getProduceBendihetong() == null && produce.getProduceWaidihetong() == null) {
                 outputRepository.save(outputSource);
+                log.info("update produce, output = {}", outputSource);
             }
             UpdateUtils.copyNullProperties(produceSource, update);
-            log.info("[updateProduce] update = {}", update);
             produceRepository.save(update);
+            log.info("update produce success, produce = {}", update);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
@@ -444,7 +453,7 @@ public class ProduceServiceImpl implements ProduceService {
         //更新到数据库
         try {
             UpdateUtils.copyNullProperties(produceSource, update);
-            log.info("[updateProduce] update = {}", update);
+            log.info("update produce success, produce = {}", update);
             produceRepository.save(update);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -468,8 +477,8 @@ public class ProduceServiceImpl implements ProduceService {
             }
         }
         try {
-            log.info("[deleteProduceBatch] produceIds = {}", produceIds.toString());
             produceRepository.deleteAllByProduceIdIn(produceIds);
+            log.info("delete produce success produceIds = {}", produceIds);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.DELETE_ERROR.getMessage() + "-ID:" + produceIds.toString());
@@ -490,6 +499,7 @@ public class ProduceServiceImpl implements ProduceService {
         }
         try {
             produceRepository.deleteAllByProduceYearAndAndProduceMonthAndProduceDay(year, month, day);
+            log.info("delete produce success, year = {}, month = {}, day = {}", year, month, day);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.DELETE_ERROR.getMessage());
@@ -603,6 +613,7 @@ public class ProduceServiceImpl implements ProduceService {
                     null, null);
             try {
                 outputRepository.save(insert);
+                log.info("add output success output = {}", insert);
             } catch (Exception e) {
                 log.error(e.getMessage());
                 throw new GeneralException(ResultEnum.ADD_ERROR.getMessage() + "-产值:" + productName);

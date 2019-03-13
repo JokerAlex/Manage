@@ -113,8 +113,8 @@ public class OutputServiceImpl implements OutputService {
         }
         UpdateUtils.copyNullProperties(outputSource, update);
         try {
-            log.info("[changeOutput] update = {}", update.toString());
             outputRepository.save(update);
+            log.info("update output success output = {}", update);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());

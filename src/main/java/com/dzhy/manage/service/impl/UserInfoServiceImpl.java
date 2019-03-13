@@ -75,7 +75,8 @@ public class UserInfoServiceImpl implements UserInfoService {
         user.setUserInfoRoles(userInfo.getUserInfoRoles().toUpperCase());
         try {
             userInfoRepository.save(user);
-            log.info("[addUserInfo] user = {}", user.toString());
+            user.setUserInfoPass(null);
+            log.info("add userInfo success user = {}", user);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.ADD_ERROR.getMessage());
@@ -102,7 +103,8 @@ public class UserInfoServiceImpl implements UserInfoService {
         UpdateUtils.copyNullProperties(userSource, user);
         try {
             userInfoRepository.save(user);
-            log.info("[updateUserInfo] user = {}", user.toString());
+            user.setUserInfoPass(null);
+            log.info("update userInfo success user = {}", user);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
@@ -123,7 +125,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         userInfo.setUserInfoPass(passwordEncoder.encode(pass));
         try {
             userInfoRepository.save(userInfo);
-            log.info("resetPassword success");
+            log.info("reset password success userId = {}", userInfo.getUserInfoId());
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException("重置密码失败");
@@ -153,7 +155,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         userInfoSource.setUserInfoPass(passwordEncoder.encode(newPass));
         try {
             userInfoRepository.save(userInfoSource);
-            log.info("[changePassword] userInfoSource = {}", userInfoSource.toString());
+            log.info("change password success userId = {}", userInfoSource.getUserInfoId());
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException("修改密码失败");
@@ -170,6 +172,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         }
         try {
             userInfoRepository.deleteAllByUserInfoIdIn(userIds);
+            log.info("delete users success userIds = {}", userIds);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.DELETE_ERROR.getMessage());

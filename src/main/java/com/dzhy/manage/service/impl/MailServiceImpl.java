@@ -68,8 +68,8 @@ public class MailServiceImpl implements MailService {
             String fileName = file.getFilename();
             helper.addAttachment(fileName, file);
 
-            log.info("[sendAttachmentsMail] filePath = {}", filePath);
-            log.info("[sendAttachmentsMail] fileName = {}", fileName);
+            log.info("filePath = {}", filePath);
+            log.info("fileName = {}", fileName);
 
             mailSender.send(message);
         } catch (MessagingException e) {

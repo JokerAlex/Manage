@@ -3,12 +3,13 @@
 <configuration>
     <springProperty scope="context" name="logPath" source="manage.files.path" defaultValue="logs"/>
     <property name="LOG_HOME" value="${logPath}"/>
+    <property name="PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level %-10thread %logger{36}.%M:%L | %msg%n</property>
 
     <!--控制台日志输出-->
     <appender name="consoleLog" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>
-                %date{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread]-[%logger{36}] --> %msg%n
+                ${PATTERN}
             </pattern>
         </layout>
     </appender>
@@ -21,7 +22,7 @@
         </filter>
         <encoder>
             <pattern>
-                %date{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread]-[%logger{36}] --> %msg%n
+                ${PATTERN}
             </pattern>
         </encoder>
         <!--滚动策略-->
@@ -42,7 +43,7 @@
         </filter>
         <encoder>
             <pattern>
-                %date{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread]-[%logger{36}] --> %msg%n
+                ${PATTERN}
             </pattern>
         </encoder>
         <!--滚动策略-->

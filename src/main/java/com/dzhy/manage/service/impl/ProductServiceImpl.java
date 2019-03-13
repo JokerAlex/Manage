@@ -71,7 +71,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage() + ":" + productName);
         }
 
-        log.info("[checkProductName] productName = {}", productName);
+        log.info("productName = {}", productName);
         boolean isExist = productRepository.existsByProductName(productName);
         if (isExist) {
             return ResponseDTO.isError(ResultEnum.UNUSABLE_NAME.getMessage() + " 名称:" + productName);
@@ -90,7 +90,6 @@ public class ProductServiceImpl implements ProductService {
         if (!r.isOk()) {
             return r;
         }
-        log.info("[addProduct] product = {}", product.toString());
         Product insert = new Product();
         insert.setProductName(product.getProductName());
         insert.setProductPrice(product.getProductPrice());
@@ -99,6 +98,7 @@ public class ProductServiceImpl implements ProductService {
         insert.setProductSize(product.getProductSize());
         try {
             productRepository.save(insert);
+            log.info("add product success product = {}", insert);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.ADD_ERROR.getMessage());
@@ -164,7 +164,6 @@ public class ProductServiceImpl implements ProductService {
         update.setProductComment(product.getProductComment());
         update.setProductSize(product.getProductSize());
         update.setCategoryId(product.getCategoryId());
-        log.info("[addProduct] product = {}", product.toString());
         Product source = productRepository.findByProductId(product.getProductId());
         boolean isPriceUpdate = true;
         if (source.getProductPrice().equals(update.getProductPrice())) {
@@ -173,6 +172,7 @@ public class ProductServiceImpl implements ProductService {
         UpdateUtils.copyNullProperties(source, update);
         try {
             productRepository.save(update);
+            log.info("update product success product = {}", update);
             //判断价格是否更新
             if (isPriceUpdate) {
                 List<Output> outputList = outputRepository.findAllByOutputProductId(update.getProductId());
@@ -229,7 +229,6 @@ public class ProductServiceImpl implements ProductService {
         }
         FileUtil.upload(map, filePath);
         //产品保存图片信息
-        log.info("productImg : {}", product.getProductImg());
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isNotBlank(product.getProductImg())) {
             sb.append(product.getProductImg()).append(",");
@@ -238,6 +237,7 @@ public class ProductServiceImpl implements ProductService {
         product.setProductImg(sb.toString());
         try {
             productRepository.save(product);
+            log.info("upload pictures success product = {}", product);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
@@ -263,11 +263,11 @@ public class ProductServiceImpl implements ProductService {
         FileUtil.del(fileNames, filePath);
         List<String> pictureList = Lists.newArrayList(product.getProductImg().split(","));
         boolean delImgStr = pictureList.removeAll(fileNames);
-        log.info("[deletePictures] productId : {}, delImgStr : {}", productId, delImgStr);
         //产品图片信息更新
         product.setProductImg(StringUtils.join(pictureList, ","));
         try {
             productRepository.save(product);
+            log.info("delete pictures success productId : {}, delImgStr : {}", productId, delImgStr);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
@@ -284,9 +284,9 @@ public class ProductServiceImpl implements ProductService {
         if (!productRepository.existsById(productId)) {
             return ResponseDTO.isError(ResultEnum.NOT_FOUND.getMessage() + "-ID:" + productId);
         }
-        log.info("[deleteProduct] productId = {}", productId);
         try {
             productRepository.deleteById(productId);
+            log.info("delete product success, productId = {}", productId);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.DELETE_ERROR.getMessage());
@@ -301,7 +301,6 @@ public class ProductServiceImpl implements ProductService {
         if (CollectionUtils.isEmpty(productIds)) {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
         }
-        log.info("[deleteProductBatch] productIds = {}", productIds.toString());
         try {
             //获取所有图片名称
             List<Product> productList = productRepository.findByProductIdIn(productIds);
@@ -320,8 +319,9 @@ public class ProductServiceImpl implements ProductService {
             if (CollectionUtils.isNotEmpty(pictures)) {
                 FileUtil.del(pictures, filePath);
             }
-            log.info("[deleteProductBatch] pictures : {}", pictures.toString());
+            log.info("delete product batch pictures : {}", pictures);
             productRepository.deleteAllByProductIdIn(productIds);
+            log.info("delete product batch productIds = {}", productIds);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.DELETE_ERROR.getMessage());

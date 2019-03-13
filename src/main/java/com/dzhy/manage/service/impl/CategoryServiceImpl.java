@@ -58,7 +58,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category add = new Category().setCategoryName(category.getCategoryName());
         try {
             categoryRepository.save(add);
-            log.info("[addCategory] add success");
+            log.info("add category success category = {}", add);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.ADD_ERROR.getMessage());
@@ -80,7 +80,7 @@ public class CategoryServiceImpl implements CategoryService {
         update.setCategoryName(category.getCategoryName());
         try {
             categoryRepository.save(update);
-            log.info("[updateCategory] update success");
+            log.info("update category success category = {}", update);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.UPDATE_ERROR.getMessage());
@@ -95,8 +95,8 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ParameterException(ResultEnum.ILLEGAL_PARAMETER.getMessage());
         }
         try {
-            log.info("[deleteCategoryBatch] categoryIds : {}", categoryIds.toString());
             categoryRepository.deleteByCategoryIdIn(categoryIds);
+            log.info("categoryIds : {}", categoryIds);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new GeneralException(ResultEnum.DELETE_ERROR.getMessage());
