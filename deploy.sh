@@ -61,25 +61,7 @@ send "cd ${RemoteDir}\r"
 
 expect -re {[#\$]+}
 
-send "./kill.sh\r"
-
-expect -re {[#\$]+}
-
-send "ls\r"
-
-###############start################
-
-expect -re {[#\$]+}
-
-send "mv ${RemoteDirTemp}/${FileName} ${RemoteDir}\r"
-
-expect -re {[#\$]+}
-
-send "cd ${RemoteDir}\r"
-
-expect -re {[#\$]+}
-
-send "./start.sh\r"
+send "./killAndStart.sh\r"
 
 expect "*Started *Application in * seconds (JVM running for *)"
 
