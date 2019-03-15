@@ -56,12 +56,12 @@ public class Task {
      */
     @Scheduled(cron = "0 0 1 * * ?")
     public void produceSendMailTask() {
-        log.info("[produceSendMailTask] start time = {}", LocalDateTime.now());
+        log.info("produceSendMail start time = {}", LocalDateTime.now());
 
         LocalDate date = LocalDate.now();
         date = date.minusDays(1);
         if (!produceRepository.existsByProduceYearAndProduceMonthAndProduceDay(date.getYear(), date.getMonthValue(), date.getDayOfMonth())) {
-            log.info("[produceSendMailTask] 日期 {} 没有数据", date);
+            log.info("produceSendMailTask 日期 {} 没有数据", date);
             return;
         }
 
@@ -73,20 +73,20 @@ public class Task {
             File file = new File(filePathAndName);
             if (!file.exists()) {
                 boolean isCreate = file.createNewFile();
-                log.info("[createNewFile] isCreate = {}", isCreate);
+                log.info("createNewFile isCreate = {}", isCreate);
             }
 
             FileOutputStream fileOutputStream = new FileOutputStream(file);
 
             ResponseDTO exportResult = iProduceService.exportExcel(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), fileOutputStream);
-            log.info("[exportExcel] exportResult = {}", exportResult.toString());
+            log.info("exportExcel exportResult = {}", exportResult.toString());
             fileOutputStream.flush();
             fileOutputStream.close();
 
             //发送邮件- excel 文件名称作为邮件标题
             String content = "附件为" + date + "最终" + Constants.PRODUCE_TITLE;
             ResponseDTO sendMailResult = iMailService.sendAttachmentsMail(mailTo, fileName, content, filePathAndName);
-            log.info("[sendMail] sendMailResult = {}", sendMailResult.toString());
+            log.info("sendMail sendMailResult = {}", sendMailResult.toString());
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -95,9 +95,9 @@ public class Task {
     /**
      * 每天上午 02:00 ，将前一天的生产进度导入到今天，作为今天的开始数据
      */
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 10 1 * * ?")
     public void produceImportTask() {
-        log.info("[produceImportTask] running time = {}", LocalDateTime.now());
+        log.info("produceImportTask running time = {}", LocalDateTime.now());
 
         LocalDate date = LocalDate.now();
         date = date.minusDays(1);
@@ -108,7 +108,7 @@ public class Task {
     /**
      * 每月 1 号 03:00 ，将本月的产值导出，并用邮箱发送
      */
-    @Scheduled(cron = "0 0 3 1 * ?")
+    @Scheduled(cron = "0 0 1 1 * ?")
     public void outputSendMailTask() {
         log.info("[produceSendMailTask] start time = {}", LocalDateTime.now());
 
