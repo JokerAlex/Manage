@@ -9,6 +9,10 @@ spring:
     url: jdbc:mysql://localhost:3306/manager?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: manageradmin
     password: 1234567890
+    druid:
+      # druid连接池监控
+      stat-view-servlet.login-username: manager
+      stat-view-servlet.login-password: manager_server2018
   jpa:
     show-sql: true
     properties:
